@@ -1,45 +1,36 @@
-# Hide-and-Seek Simulator
+# Hide-and-Seek POMCP Simulator
 
-A comprehensive simulation framework for probabilistic search and tracking of humans in urban environments using POMDPs, POMCP, and particle filters. This code was developed as part of a PhD thesis on robot-human hide-and-seek games.
+Simulation framework for robot search and tracking using POMCP (Partially Observable Monte-Carlo Planning) and particle filters. Developed for PhD research on probabilistic human tracking in urban environments.
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Language: C++11](https://img.shields.io/badge/C++-11-00599C.svg)](https://isocpp.org/)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://www.linux.org/)
 
-## Overview
+> **Try it online:** [Interactive Hide-and-Seek Belief Simulation](https://alex.goldhoorn.net/projects/hide-and-seek-belief/)
 
-This project contains a complete hide-and-seek game simulator and seeker algorithms (POMDP "solvers") for robot search and tracking tasks. The simulator includes:
+## What's Included
 
-- **Server-client architecture** for multiplayer hide-and-seek games
-- **Graphical client** for human players to play against robot seekers
-- **Multiple solver implementations**:
-  - MOMDP (Mixed Observability MDP) with offline planning
-  - POMCP (Partially Observable Monte-Carlo Planning) for online real-time planning
-  - Particle Filters and Kalman Filters for tracking
-  - Heuristic seekers (smart seeker, follower, etc.)
-  - Multi-robot cooperative search
-- **Extensive logging** to MySQL database for analysis
+- **POMCP & MOMDP solvers** for real-time robot decision making under uncertainty
+- **Particle Filter & Kalman Filter** implementations for tracking
+- **Multi-robot cooperative search** algorithms
+- **Server-client architecture** for multiplayer games (humans vs robots)
 - **ROS integration** for real robot experiments
+- **MySQL logging** for experiment analysis
+- Maps, policies, and test scenarios from published research
 
-The code can be run as a standalone console simulator or integrated with ROS for real robot deployments.
+## Publications
 
-## Related Publications
-
-This code was developed for the following PhD thesis and publications:
-
-**PhD Thesis:**
-> Alex Goldhoorn. *"Searching and Tracking of Humans in Urban Environments by Humanoid Robots"*.
-> Institut de Robòtica i Informàtica Industrial, CSIC-UPC, Barcelona, Spain, 2017.
+**PhD Thesis (2017):**
+> *"Searching and Tracking of Humans in Urban Environments by Humanoid Robots"*
+> Alex Goldhoorn, IRI CSIC-UPC, Barcelona
 > [PDF](https://alex.goldhoorn.net/thesis/Goldhoorn2017_PhD_thesis.pdf) | [Website](https://alex.goldhoorn.net/thesis/)
 
-**Key Publications:**
-- **Autonomous Robots 2017** - [Searching and Tracking People with Cooperative Mobile Robots](https://alex.goldhoorn.net/publications/ar2016/)
-- **Robotics and Autonomous Systems 2017** - [Searching and Tracking People in Urban Environments with Static and Dynamic Obstacles](https://alex.goldhoorn.net/publications/ras2016/)
-- **Humanoids 2014** - [Continuous Real Time POMCP to Find-and-Follow People](https://alex.goldhoorn.net/publications/find-and-follow/)
-- **ROBOT 2013** - [Analysis of Methods for Playing Human Robot Hide-and-Seek](https://alex.goldhoorn.net/publications/robot2013/)
+**Selected Papers:**
+- [Searching and Tracking People with Cooperative Mobile Robots](https://alex.goldhoorn.net/publications/ar2016/) (Autonomous Robots, 2017)
+- [Searching in Urban Environments with Dynamic Obstacles](https://alex.goldhoorn.net/publications/ras2016/) (Robotics and Autonomous Systems, 2017)
+- [Continuous Real Time POMCP to Find-and-Follow People](https://alex.goldhoorn.net/publications/find-and-follow/) (Humanoids, 2014)
 
-**Interactive Demo:**
-Try the [Hide-and-Seek Belief Simulation](https://alex.goldhoorn.net/projects/hide-and-seek-belief/) to compare POMCP, Particle Filters, and frontier exploration algorithms.
+**[All publications](https://alex.goldhoorn.net/publications/)**
 
 ## Citation
 
@@ -56,178 +47,59 @@ If you use this code in your research, please cite:
 }
 ```
 
-## Project Structure
-
-```
-hide-and-seek/
-├── trunk/              # Main development branch
-│   ├── src/           # Source code (~474 C++ files)
-│   ├── include/       # Headers (includes APPL 0.95 POMDP solver)
-│   ├── sql/           # Database schemas for game logging
-│   ├── data/          # Maps, policies, and test data
-│   ├── scripts/       # Build and utility scripts
-│   └── *.pro          # Qt project files
-├── branches/          # Development branches (MOMDP variants)
-├── tags/              # Release tags (CR-POMCP versions)
-└── data/              # Shared data (maps, policies, test files)
-```
-
-## Requirements
-
-### Original Requirements (2013-2016)
-
-This code was developed between 2011-2016 and has the following **historical dependencies**:
-
-- **g++ 4.8** or newer
-- **Qt 5** (for GUI and server)
-- **MySQL 5.6+** (for game logging)
-- **OpenCV 2.3** (< 3.0, though OpenCV 3 is supported with `CONFIG+=USE_OPENCV3`)
-- **Eigen v3**
-- **iriutils** (IRI robotics library - see below)
-
-> **⚠️ Note on Outdated Dependencies:**
-> These requirements are ~10 years old. For modern systems (2024+), you will likely need to:
-> - Use g++ 11+ with `-std=c++11` flag
-> - Update to OpenCV 4.x (may require API changes)
-> - Use MySQL 8.x (mostly backwards compatible)
-> - Qt 5.15+ or Qt 6 (may require minor updates)
-
-### External Dependency: iriutils
-
-The code depends on `iriutils`, an IRI robotics utility library:
+## Quick Start
 
 ```bash
-# Original SVN repository (may require IRI access):
-svn co https://devel.iri.upc.edu/labrobotica/drivers/iriutils/trunk
-
-# Build iriutils:
-cd iriutils/trunk
-mkdir build && cd build
-cmake ..
-sudo make install
-```
-
-> **Note:** The iriutils SVN repository may not be publicly accessible. If you encounter access issues, please contact the repository maintainers or check for alternative installations.
-
-## Building
-
-### Library Version (CMake)
-
-To build just the library for use with ROS or other applications:
-
-```bash
+# Build the library
 cd trunk/build
 cmake ..
 make
-```
 
-### Console Simulator (Qt)
-
-The simulator uses Qt project files. Build with:
-
-**Using Qt Creator:**
-1. Open desired `.pro` file in Qt Creator
-2. Configure for Release or Debug
-3. Build
-
-**Using qmake:**
-```bash
+# Or build with Qt for GUI/server
 cd trunk
-qmake hsmomdp.pro      # Automated seeker
-qmake hsserver.pro     # Game server
-qmake hsclient.pro     # GUI client
-qmake hsautohider.pro  # Automated hider
-make
+qmake hsmomdp.pro && make    # Automated seeker
+qmake hsserver.pro && make   # Game server
+qmake hsclient.pro && make   # GUI client
 ```
 
-**Build all at once:**
-```bash
-cd trunk
-./scripts/qmake-all.sh
-```
+See `trunk/README.txt` for detailed build instructions and command-line options.
 
-### Qt Project Files
+## Dependencies
 
-- `hsmomdp.pro` - Console automated seeker with POMCP/MOMDP solvers
-- `hsserver.pro` - Game server for multiplayer games
-- `hsclient.pro` - Graphical client for human players
-- `hsautohider.pro` - Automated hider agent
-- `actiongen.pro` - Random action generator for testing
+**Required:**
+- g++ 4.8+ (C++11 support)
+- Qt 5
+- OpenCV 2.3+ (OpenCV 3.x/4.x supported with modifications)
+- Eigen v3
+- MySQL 5.6+ (optional, for logging)
+- **iriutils** - IRI robotics library ([SVN](https://devel.iri.upc.edu/labrobotica/drivers/iriutils/trunk/), may require IRI access)
 
-## Database Setup (Optional)
+> **⚠️ Historical Code Notice:**
+> This code is from 2011-2016. Dependencies are outdated by modern standards. Expect to update OpenCV API calls and use newer compiler versions. For a modern demo, see the [web-based simulation](https://alex.goldhoorn.net/projects/hide-and-seek-belief/).
 
-For game logging and analysis:
-
-1. Install MySQL server:
-```bash
-sudo apt-get install mysql-server mysql-client
-```
-
-2. Create the database:
-```bash
-mysql -u root -p < trunk/sql/hsgamelog-db-new-multi.sql
-```
-
-> **Security Note:** The SQL setup script creates a user with password `hsserver_us3r_p@ss`. This is fine for local development/research, but change it for any public deployment.
-
-## Quick Start Example
+## Example Usage
 
 ```bash
-# 1. Start the server
-cd trunk
+# Start game server
 ./bin/hsserver
 
-# 2. In another terminal, start an automated seeker with POMCP:
+# Run POMCP seeker on map 1
 ./bin/hsmomdp -Gh -scd -A 1 -u TestUser
 
-# Command breakdown:
-# -Gh        : Game mode = hide-and-seek
-# -scd       : Solver = POMCP with discrete states
-# -A 1       : Use map ID 1
-# -u TestUser: Username for logging
+# Flags: -Gh (hide-and-seek mode), -scd (POMCP discrete states)
+# See trunk/README.txt or run with -h for all options
 ```
 
-For detailed command-line options, run:
-```bash
-./bin/hsmomdp -h
-```
+## Available Solvers
 
-## Solver Types
+- **POMCP** (`-scd`, `-scc`) - Online Monte-Carlo planning (discrete/continuous)
+- **MOMDP** (`-sl`) - Offline mixed-observability planning
+- **Particle Filter** (`-sPu`) - Particle-based tracking
+- **Kalman Filter** (`-sKr`) - Linear tracking
+- **Multi-robot** (`-sMc`) - Cooperative search
+- **Smart Seeker** (`-ss`) - Heuristic baseline
 
-The simulator supports multiple solving approaches:
-
-| Solver | Flag | Description |
-|--------|------|-------------|
-| **POMCP** | `-scd` | Online POMCP with discrete states |
-| **POMCP Continuous** | `-scc` | POMCP with continuous state space |
-| **MOMDP** | `-sl` | Layered MOMDP with offline planning |
-| **Particle Filter** | `-sPu` | Particle filter tracker |
-| **Kalman Filter** | `-sKr` | Linear Kalman filter |
-| **Smart Seeker** | `-ss` | Heuristic-based seeker |
-| **Multi-robot** | `-sMc` | Multi-robot cooperative search |
-
-## ROS Integration
-
-The code includes ROS integration for real robot experiments. See `trunk/README.txt` lines 149-177 for ROS simulation instructions using the Tibi-Dabo robot platform.
-
-## Interactive Visualization
-
-For a web-based visualization of the belief tracking algorithms, visit:
-**[Hide-and-Seek Belief Simulation](https://alex.goldhoorn.net/projects/hide-and-seek-belief/)**
-
-This interactive demo lets you compare:
-- POMCP (Monte-Carlo planning)
-- Particle Filter tracking
-- Frontier exploration
-- Smart heuristic seekers
-
-## Documentation
-
-Detailed documentation is available in:
-- `trunk/README.txt` - Complete command-line reference (17KB)
-- `trunk/doc/` - Doxygen configuration files
-- [PhD Thesis](https://alex.goldhoorn.net/thesis/) - Theoretical background and analysis
-- [Thesis Videos](https://alex.goldhoorn.net/thesis/hide-and-seek-pomcp/) - Experimental demonstrations
+See `trunk/README.txt` for complete command reference.
 
 ## License
 
@@ -239,25 +111,17 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-## Author & Contact
+## Contact
 
 **Alex Goldhoorn**
-Institut de Robòtica i Informàtica Industrial, CSIC-UPC
-Barcelona, Spain
+Website: [alex.goldhoorn.net](https://alex.goldhoorn.net)
+Email: alex@goldhoorn.net
 
-- Website: [alex.goldhoorn.net](https://alex.goldhoorn.net)
-- Original Email: agoldhoorn@iri.upc.edu, alex@goldhoorn.net
+_Note: The institutional email (agoldhoorn@iri.upc.edu) from the original research is no longer active._
 
-For questions about the code or research, please refer to the [publications](https://alex.goldhoorn.net/publications/) or [thesis](https://alex.goldhoorn.net/thesis/) pages.
+## Credits
 
-## Acknowledgments
+Developed at Institut de Robòtica i Informàtica Industrial (IRI), CSIC-UPC, Barcelona (2011-2016).
+PhD supervised by Alberto Sanfeliu and René Alquézar.
 
-This work was developed at the Institut de Robòtica i Informàtica Industrial (IRI), CSIC-UPC, Barcelona, as part of a PhD thesis supervised by Alberto Sanfeliu and René Alquézar.
-
-The POMDP solver uses the APPL 0.95 library, included in `trunk/ext_include/appl-0.95/`.
-
-## Historical Note
-
-This code represents research from 2011-2016 and uses dependencies from that era. While the algorithms and approaches remain valid and scientifically relevant, the software dependencies are outdated by modern standards (2024+). Consider this when building and deploying.
-
-For a modern, interactive demonstration of the core algorithms, see the [web-based belief simulation](https://alex.goldhoorn.net/projects/hide-and-seek-belief/).
+Uses APPL 0.95 POMDP solver library (included in `trunk/ext_include/appl-0.95/`).
