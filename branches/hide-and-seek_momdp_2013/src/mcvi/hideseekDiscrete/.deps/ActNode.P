@@ -1,0 +1,10 @@
+ActNode.o: ../../src/ActNode.cc ../../src/ActNode.h ../../src/Action.h \
+ ../../src/Model.h ../../src/State.h ../../src/Utils.h \
+ ../../src/ObsEdge.h ../../src/Obs.h ../../src/Particle.h \
+ ../../src/PolicyGraph.h ../../src/Belief.h ../../src/Bounds.h \
+ ../../src/RandSource.h
+../../src/ActNode.cc ../../src/ActNode.h ../../src/Action.h :
+ ../../src/Model.h ../../src/State.h ../../src/Utils.h :
+ ../../src/ObsEdge.h ../../src/Obs.h ../../src/Particle.h :
+ ../../src/PolicyGraph.h ../../src/Belief.h ../../src/Bounds.h :
+ ../../src/RandSource.h :

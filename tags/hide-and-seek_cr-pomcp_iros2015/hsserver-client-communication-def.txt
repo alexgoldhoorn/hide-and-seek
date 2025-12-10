@@ -1,0 +1,230 @@
+
+
+1) All messages start with:
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+BlockSize	BLOCK_SIZE (quint32)	Length in bytes of block, excluding this
+					field.
+MessageType	MESSAGE_TYPE_SIZE	Type of message
+		(quint8)
+
+
+2) Start connection with server
+Client -> Server
+(GameConnectorClient.sendInfoToServer -> HSTCPServer.handleNewConnection)
+MessageType=clientRequestConn=0
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+GameType	quint8			game type, but if server receives the
+					value 255 it stops.
+MapID		quint16			ID of map (list can be seen through 
+					hsmomdp -A);
+-- If MapID==65534, then:
+[Map		GMap [I]
+]
+MapDistMatFile	QString			File name of matrix with (precalc.)
+					distances for the map.
+					Note: should be path for accessible to
+					server.
+UseContinuous	quint8			Use continuous or not.
+WinDist		double			Maximum distance seeker-hider where
+					seeker 'catches' the hider.
+MinObstDist	double			Minimum distance to obstacle.
+OppType		quint16			Opponent type.
+-- If OppType==OPPONENT_TYPE_HIDER_ACTION_LIST(3) or 
+--	     ==OPPONENT_TYPE_HIDER_FILE(11) then:
+[ActionPosFile	QString			Action or position file for opponent.
+]
+RandomPosDist	quint16			Distance to base of the hider for a 
+					random start pos (if fixed dist. used).
+AutoWalkerType	quint16			Type of auto walkers.
+AutoWalkerN	quint16			Number of auto walkers.
+-- If AutoWalkerType == AUTOWALKER_FILE(4) then:
+[AutoWalkerFile	QString			file with positions for auto walkers.
+]
+SolverType	quint8			Type of model/method for auto seeker.
+StopAtWin	bool			Stop game if won.
+NumSteps	quint16			Number of iterations to do.
+MyType		quint8			Type of player: seeker/hider.
+UserName	QString			Name of player.
+SimObsNoiseStd	double			Standard deviation of simulated obser-
+					vation noise.
+SimObsFalseNegP	double			Simulated false negative probability.
+SimObsFalsePosP	double			Simulated false positive probability.
+MetaInfo	QString
+Comments	QString
+
+
+
+
+
+3) Send params. to players
+Server -> Clients
+(HSTCPServer.sendParamsToPlayers -> GameConnectorClient.readInitInfoFromServer)
+MessageType=gameParams=1
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+GameType	quint8
+UseContinuous	quint8
+PlayerType	quint8			Seeker/hider
+MaxNumActions	quint16			Maximum number of actinos.
+WinDist		double
+MinDistToObst	double
+MapID		quint16
+Map		GMap [I]
+Player2Name	QString
+Player3Name	QString			(when playing with 2 seekers, otherwise
+					empty)
+SimObsNoiseStd	double
+SimObsFalseNegP	double
+SimObsFalsePosP	double
+SendNoisePos	bool			Send noisy positions or not.
+
+
+4) Read init positions
+(Clients -> Server)
+
+MessageType=initPos=2
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+Pos		Pos [II]
+
+
+5) Send update to players
+(Server -> Clients)
+
+MessageType=update=3
+
+The player 2 should be the hider (if it is not send to hider, when it is seeker),
+player 3 is the other seeker (if the game contains 2 seekers).
+The bool SendPostionWith should be false for the hider.
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+Validation	quint16			Validation, but not used, always 1
+GameStatus	quint16			Status of game (running/won/lost).
+Player2Pos	Pos [II]		Position of player 2.
+-- if (SendPostionWith noise):
+[HiderWNoise	Pos [II]		Position of hider with noise.
+]
+-- if (use 2 seekers):
+[Player3Pos	Pos [II]		Player 3 pos.
+-- if (SendPostionWith noise):
+[
+HiderWNoise2    Pos [II]                Pos of hider with noise as seen by
+                                        other seeker.
+]
+NumbAutoWalker	quint16			Number of auto walkers
+-- for each auto walker:
+[Pos		IDPos [III]		Pos of autowalker
+]
+
+
+
+
+6) Read new action
+(Clients -> Server)
+MessageType=action=4
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+Action		quint16			Action
+Position	Pos [II]
+BeliefScore	double			Score of belief.
+Reward		double			Reward by client's model.
+
+
+7) Send message
+
+7.1) (Client -> Server)
+MessageType=message=5
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+To		quint8			Send message to: all=0,.. 
+Message		?			Free
+
+
+7.2) Server -> Client(s)
+MessageType=message=5
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+To		quint8			Send message to: all=0,.. 
+From		quint8			Id from user (hider/seeker1/seeker2)
+Message		?			Free
+
+
+8) Send robot goals
+Client->Server: anounce its goals + beliefs
+Server->Clients: anounce other's goals+beliefs
+
+The number of goals should be 1 or 2. The first goal is of the robot from
+who it is sent OR to who it is sent, EXCEPT when only 1 goal is sent, then
+for messages Server->Client this will be the other client's goal.
+The belief has the same order, but can contain 0 items.
+
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+NumGoals        quint8                  Number of goals to be sent.
+Goal1           Pos [II]                Goal position of client.
+[Goal2          Pos [II]                Goal of other client
+]
+NumBeliefs      quint8                  Number of belief items for goal
+                                        (should be NumGoals or 0).
+[belief1        double
+[belief2        double
+]
+]
+
+
+
+
+===== Data types ======
+
+I) GMap
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+Name		QString
+Rows		quint16			Number of rows.
+Cols		quint16			Number of cols.
+Obst		quint32			Number of obstacles.
+-- x Obst:  (obst. times)
+[row		quint16			Row of obstacle.
+ col		quint16			Col of obstacle.
+]
+BaseRow		quint16			Base row.
+BaseCol		quint16			Base col.
+
+
+
+II) Pos
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+row		int/double*
+col		int/double*
+
+*double if UseContinuous is true
+
+
+III) IDPos
+--------------------------------------------------------------------------------
+NAME		TYPE			DESCRIPTION
+--------------------------------------------------------------------------------
+Pos		Pos [II]
+id		quint16			ID of autowalker/hider/..
+

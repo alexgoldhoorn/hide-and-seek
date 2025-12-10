@@ -1,0 +1,2 @@
+Obs.o: ../../src/Obs.cc ../../src/Obs.h
+../../src/Obs.cc ../../src/Obs.h :

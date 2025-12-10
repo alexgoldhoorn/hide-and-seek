@@ -1,0 +1,112 @@
+
+
+
+select * 
+from GameSteps
+
+
+select * 
+from GameListDetail
+where seeker like 'pomcp%' or seeker like 'smart%'
+
+
+select *
+from GameSteps
+
+select '\\  $'
+
+
+
+left join ... 
+
+
+select Seeker,HiderCat,MapName,WinState,count(*)
+from GameListDetail
+group by Seeker,HiderCat,MapName,WinState
+
+
+select * from 
+GameListWinCounter
+GameListWinPerc
+
+alter view GameListMapSeekerAndHiderCatWinCounter as 
+select Seeker,HiderCat,MapName,WinState_id,count(*) as n,
+        avg(`GameDuration`) AS `AvgGameDuration`,
+        ((1.0 * avg(`GameDuration`)) / count(*)) AS `AvgGameDurationPerStep`,
+        avg(`NumActions`) AS `AvgNumActions`
+from GameListDetail
+group by Seeker,HiderCat,MapName,WinState_id
+
+
+alter view GameListMapSeekerAndHiderCat AS
+    select distinct
+        MapName AS `MapName`,
+		Seeker,
+		HiderCat
+    from
+        `GameListDetail`
+	where not seeker like '%test%' and hider not like '%test%'
+
+
+
+
+create VIEW `GameListWinCounterMapSeekerAndHiderCat` AS
+    select 
+        `g`.`MapName` AS `MapName`,
+        `g`.`Seeker` AS `Seeker`,
+        `g`.`HiderCat` AS `HiderCat`,
+        coalesce(`gcw`.`n`, 0) AS `NumWin`,
+        coalesce(`gcl`.`n`, 0) AS `NumLose`,
+        coalesce(`gct`.`n`, 0) AS `NumTie`,
+        `gcw`.`AvgGameDurationPerStep` AS `AvgGameDurationPerStepWin`,
+        `gcl`.`AvgGameDurationPerStep` AS `AvgGameDurationPerStepLose`,
+        `gct`.`AvgGameDurationPerStep` AS `AvgGameDurationPerStepTie`,
+        `gcw`.`AvgNumActions` AS `AvgNumActionsWin`,
+        `gcl`.`AvgNumActions` AS `AvgNumActionsLose`,
+        `gct`.`AvgNumActions` AS `AvgNumActionsTie`
+    from
+        (((`GameListMapSeekerAndHiderCat` `g`
+        left join `GameListMapSeekerAndHiderCatWinCounter` `gcw` ON (((`g`.`MapName` = `gcw`.`MapName`)
+            and (`g`.`Seeker` = `gcw`.`Seeker`)
+            and (`g`.`HiderCat` = `gcw`.`HiderCat`)
+            and (`gcw`.`WinState_id` = 1))))
+        left join `GameListMapSeekerAndHiderCatWinCounter` `gcl` ON (((`g`.`MapName` = `gcl`.`MapName`)
+            and (`g`.`Seeker` = `gcl`.`Seeker`)
+            and (`g`.`HiderCat` = `gcl`.`HiderCat`)
+            and (`gcl`.`WinState_id` = 2))))
+        left join `GameListMapSeekerAndHiderCatWinCounter` `gct` ON (((`g`.`MapName` = `gct`.`MapName`)
+            and (`g`.`Seeker` = `gct`.`Seeker`)
+            and (`g`.`HiderCat` = `gct`.`HiderCat`)
+            and (`gct`.`WinState_id` = 3))))
+
+
+
+
+
+create VIEW `GameListWinPercMapSeekerAndHiderCat` AS
+    select 
+        `gl`.`MapName` AS `MapName`,
+        Seeker,
+        HiderCat,
+        `gl`.`NumWin` AS `NumWin`,
+        `gl`.`NumLose` AS `NumLose`,
+        `gl`.`NumTie` AS `NumTie`,
+        `gl`.`AvgGameDurationPerStepWin` AS `AvgGameDurationPerStepWin`,
+        `gl`.`AvgGameDurationPerStepLose` AS `AvgGameDurationPerStepLose`,
+        `gl`.`AvgGameDurationPerStepTie` AS `AvgGameDurationPerStepTie`,
+        `gl`.`AvgNumActionsWin` AS `AvgNumActionsWin`,
+        `gl`.`AvgNumActionsLose` AS `AvgNumActionsLose`,
+        `gl`.`AvgNumActionsTie` AS `AvgNumActionsTie`,
+        ((`gl`.`NumWin` + `gl`.`NumLose`) + `gl`.`NumTie`) AS `NumTotal`,
+        ((100.0 * `gl`.`NumWin`) / ((`gl`.`NumWin` + `gl`.`NumLose`) + `gl`.`NumTie`)) AS `WinPerc`,
+        ((100.0 * `gl`.`NumLose`) / ((`gl`.`NumWin` + `gl`.`NumLose`) + `gl`.`NumTie`)) AS `LosePerc`,
+        ((100.0 * `gl`.`NumTie`) / ((`gl`.`NumWin` + `gl`.`NumLose`) + `gl`.`NumTie`)) AS `TiePerc`
+    from
+        ((`GameListWinCounterMapSeekerAndHiderCat` `gl`))
+
+
+
+select * 
+from GameListWinPercMapSeekerAndHiderCat
+
+

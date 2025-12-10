@@ -1,0 +1,1317 @@
+
+- testing pomcp, why does  belief not propagate well
+
+        build/release/momdp/hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u test_findp5 -E test_1121_find_1 -oh  -Ns 0 -S 2000 -C -A 129  -w 1 -fd 0 -mo 0.5 -em 30 -en 10 -mr 0 -md 4  -nr 2  -np 1   -sMc -ns 1000 -ni 1000 -d 2 -bz 4 -us 3   -bi "out.png"  -bf
+
+        build/release/momdp/hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u test_findp5 -E test_1121_find_1 -oh  -Ns 0 -S 2000 -C -A 129  -w 1 -fd 0 -mo 0.5 -em 30 -en 10 -mr 0 -md 4  -nr 2  -np 1   -scc -ns 1000 -ni 1000 -d 2 -bz 4 -us 3   -bi "out.png"  -bf
+
+- tried without success
+    -x Tried without prob. of inconsistency:   -cpiu 0
+    -x but not enough, then tried also -bf (belief filter before update): slightly better, but still a lot of noise..
+    -x disable visib. check: -dv
+    -x remove all false pos/neg/..: -cpfp 0 -cpfn 0
+
+
+X--->  Checked MCTS::update:
+  - filter existing belief -> seems to be ok
+  - generate/fill new belief based on old belief -> seems to be ok
+  - there is a case where inconsistent hider locations were passed, but without observation BUT probably in phase of learning,
+  x-> TODO: check LEARNING phase (next in getNextPosRun, after Update) !!!!
+    Maybe it doesn't put it under right obs?????
+       -> can't be this because the learned policy/belief is NOT used directly, ONLY in the next iteration where in the update there first is a filter,
+          so it should already have eleminated the inconsistent states
+
+  - after update there are already inconsistent states in root.belief
+  --> it happens during update where new states are added/filled (also when disabling learning), and also in init belief gen, so probably something with consist. check!!!
+  ---> CAUSE was noise, works with:  -csns 0 -csnh 0 -csos 0 -csoh 0
+
+--> PROBLEMS when using visibility distance
+
+    build/release/momdp/hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u test_findp5 -E test_1121_find_1 -oh  -Ns 0 -S 2000 -C -A 14  -w 1 -fd 0 -mo 0.5    -nr 2  -np 1   -sCh -ns 1000 -ni 1500 -d 1 -bz 1 -us 3   -bi "out.png"  -cpiu 0 -bf
+
+    if disabled (-dv) it seems to work ...
+    TODO: check with big map (master2016med); see if params of distance and prob ok; check number particles... does it really reduce probability when close to robot????
+    (but seems to work in PF?? is this ok?)
+    -> seems ok if -cpiu is low (.e.g. 0.1)
+
+
+NEXT: try do not use distance for invisib.
+TODO: check previous versions...
+---
+
+
+- for Ely:
+    - test extra score
+    - create command line examples
+    - add AutoPlayer that first goes to a fixed location (could be from file) and then runs other (HB)
+    - use multi hide/seek game mode
+        -> could be same, close to person, and set distance to person when it stops... and max time
+    - weights:
+        -> std. weights: w_util=0.5; w_dist=0.4; w_b=0.2; w_ext=0;
+        with ext:
+        -> w_util=0.3; w_dist=0.3; w_b=0.2; w_ext=0.2;
+
+    ./hsmomdp -Gfm -bi out0.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 129 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 3 -np 2 -sPM -nP 1000 -bz 4 -us 3 -ew 0.3 0.3 0.2 0.2 -eM score_hidden_zones_file_poseBase2_t10.txt false
+    ./hsmomdp -Gfm -bi out0.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 129 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 3 -np 2 -sPM -nP 1000 -bz 4 -us 3 -ew 0.3 0.3 0.2 0.2 -eM score_hidden_zones_file_con_t_10_Base1_Bien1.txt false
+
+
+    ./hsmomdp -Gfm -bi out0.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 129 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 3 -np 1 -sPM -nP 1000 -bz 4 -us 3
+
+    - error: file of ely is incorrect (has obst. on free places)
+
+-Sp "exp8_follow_seeker-0.txt"
+--
+
+- when in simulation (was using multi pf, no comm) going around obstacle, and it person hidden, but there is belief,
+  in some cases there is a goal for the seeker, but it does not move!
+--> because of this??
+    MultiSeekerHBExplorer::selectRobotPosMulti: --> chosen goal pos: r4.5c36.5[r4c36]AutoPlayer::getNextPosAsStep: from r4.5c36.5[r4c36] to r4.5c36.5[r4c36]: returning same pos, because close to goal->next pos=r4.5c36.5[r4c36]
+      , in steps, next step: r4.5c36.5[r4c36]
+- there are situations where the seekers don't move and the belief does not update!!!!!!!!!!!!!!!!!!!!!!!
+
+./hsmomdpD -Gfm -bi out0.png -Rfd -ud -oh -Ns 0 -S 5000 -C -Sp "exp8_follow_seeker-0.txt" -A 129 -w 1 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 3 -np 1 -sPM -nP 5000 -bz 4 -us 3  -nc
+
+
+./hsmomdpD -Gf -bi out0.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 119 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 2 -np 1 -sPH -nP 1000 -bz 4 -us 3
+./hsmomdpD -Gf -bi out0.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 129 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 2 -np 1 -sPH -nP 1000 -bz 4 -us 3 -Sp "exp8_follow_seeker-0.txt"
+
+HighestBeliefFollower::getNextPosRun: return r6c26AutoPlayer::getNextPosAsStep: from r6c26 to r6c26: returning same pos, because close to goal->next pos=r6c26
+, in steps, next step: r6c26
+
+
+./hsmomdpD -Gfm -bi out0.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 129 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 3 -np 1 -sPM -nP 1000 -bz 4 -us 3 -Sp "exp8_follow_seeker-0.txt"
+./hsmomdpD -Gfm -bi out1.png -Rfd -ud -oh -Ns 0 -S 1000 -C -A 129 -fd 0 -em 10 -mo .5 -en 10 -mr 0 -md 4 -nr 3 -np 1 -sPM -nP 1000 -bz 4 -us 3 -Sp "exp8_follow_seeker-1.txt"
+
+
+MultiSeekerHBExplorer::selectRobotPosMulti: --> chosen goal pos: r14c38AutoPlayer::getNextPosAsStep: from r4.5c36.5[r4c36] to r14c38:  make sure of dist. 1: dir=3.14159 next step: r5.5c36.5[r5c36]->next pos=r5.5c36.5[r5c36]
+, in steps, next step: r5.5c36.5[r5c36]
+->> SEEMS to be an equilibrium on a small obstacle, the hider cannot 'escape' fast enough
+ -> could be solved by increasing std. dev. of hider step
+
+
+
+
+- dyn. obst. not used by other robot, only own:
+    - maybe no fusion, or not recieved, ....??
+    build/release/momdp/hsmomdp -Gfm -bi "out1.png" -Rfd -ud -s localhost 1120 -u multi_j3c_find -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C  -A 127 -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1   -sPM -nP 1000 -bz 4 -us 3  -kg 300
+    build/release/momdp/hsmomdp -Gfm -bi "out2.png" -Rfd -ud -s localhost 1120 -u multi_j3c_find -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C   -A 127 -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1   -sPM -nP 1000 -bz 4 -us 3
+
+
+- TEST WITH DIST MATRIX FILE IF AUTOW IS FASTER AND IF WE DISTINGUISH TIME OF ALGOS OR BETTER ADD TIME STAMP WHEN FINISHED
+- in seekerhs: CHECK IF THE DISTANCE seeker-hider is written!!!
+
+x TODO: fix for test
+ ./hsmomdp -Gfm -bi "out1.png" -Rfd -ud -s localhost 1120 -u multi_j3c_find -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C -Sp start1-1.txt -A 127 -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1   -sPM -nP 1000 -bz 4 -us 3
+ ./hsmomdp -Gfm -bi "out2.png" -Rfd -ud -s localhost 1120 -u multi_j3c_find -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C -Sp start1-2.txt -A 127 -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1   -sPM -nP 1000 -bz 4 -us 3
+
+x - test for 1 player, PF hb
+ build/release/momdp/hsmomdp -Gf -bi "out.png" -Rfd -ud -s localhost 1120 -u singletest -E singletest -oh -Ns 0 -S 500 -C -A 119 -w 1 -fd 0  -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 2 -np 1 -sPH -nP 1000 -bz 2 -us 3 -kg 10
+ build/release/momdp/hsmomdp -Gf -bi "out.png" -Rfd -ud -s localhost 1120 -u singletest -E singletest -oh -Ns 0 -S 500 -C -A 119 -w 1 -fd 0  -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 2 -np 1 -shc -ni 1000 -ns 1 -bz 2 -us 3 -kg 10
+
+ build/release/momdp/hsmomdp -Gfm -bi "out.png" -Rfd -ud -s localhost 1120 -u single3_follow -E single3_1121_follow_32 -oh -Ns 0 -Sn 500 -C  -A 119  -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 2 -np 1   -sPH -nP 500 -bz 1 -us 3
+
+- FME, Ad. HB-PF follower
+build/release/momdp/hsmomdp -Gf -bi "out.png" -Rfd -ud -s localhost 1120 -u single3_find -E single3_1121_find_24 -oh -Ns 0 -S 500 -C  -A 119  -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 2 -np 1   -sPH -nP 500 -bz 1 -us 3  -kg 30
+- Master2016?, Ad. HB-PF follower
+build/release/momdp/hsmomdp -Gfm -bi "out.png" -Rfd -ud -s localhost 1120 -u single3_find -E single3_1121_find_1 -oh -Ns 0 -S 5000 -C  -A 127   -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 2 -np 1   -sPH -nP 1000 -bz 4 -us 3  -kg 100
+
+Alb. comm:
+- for mult: finish use of dyn. obst:
+    - send receive (also seekerhs)
+    - use!! in multiseekerhbexplorer, particlefilter...?, hssimulator.*, ...?
+    - join dyn. obst? Now done in: HSObservation::readFromPlayerInfo
+x- check in which zones the seekers start most cases in same side, or on both sides (use column?)
+  - check for PF, no heading, no autowalkerN:
+     PER zone-combi (diff-side,same-side,mid,)  check which is better
+x- distance to which we see now? 3m 85%, -17%*(d-3)
+  > graph
+x- distance to which leg detected by laser
+   ~8-10 meters, but depending detection or tracker
+   at least 3 laser points to detect at least 1 leg (maybe 4)
+     https://www.hokuyo-aut.jp/02sensor/07scanner/download/products/utm-30lx/
+     270°, but we're limited to 180° (due to cracass), max. distance 30 m
+     Angular resolution: 0.25° (360°/1440）
+
+!!!-for n robots: finish if all close to robot
+!!-in GameConneCtorClient::calcnextposseeker: is it ok to use simulaterecievingalltracks....???
+!!!- move TwoSeekerHBExplorer::calcExplorationEvaluation to HighestBeliefFollower, and use it there to choose
+    'best' highest belief of n, OR create a new class???
+x!!!- CHECK IF THE simulation stops if person found!!!
+- we COULD give all dyn. obst a slight probability of the person being there.... but when crowded it might get problamatic..
+- ! update import script for data files experiments
+x- observation and isVis_dyn in db different because db uses isVisible, and obs uses visibProbability!
+- for simulation:
+    - update stat check for follow (avg time to recover)
+    - set mappubname for map2016med etc...
+x- fixed error: in seekerhs missing in init log open
+  -> happened on Tibi, maybe conflicting code.
+X- FIX ERROR running with ros, it stops suddenly
+    -> happened due to mutex in tibi_dabo_faf_node, fixed by removing alg_.[un]lock() in tracks_callback
+- simulate
+- test in ROS + receive tracks in ROS
+x- send useDynobst..
+- receive in seekerhs the locations of dyn obst
+x- paramter in main_hs: not using dyn obst
+x- hider should be fixed
+x- use observation (hiderObsWNoise) for checking if visible or not!
+x- make use of dyn. obst. in player in PF
+!!- send dyn. obst. to other player (with obs)
+x- use dyn. obst. in beginning
+x- Fix and test for POMCP!
+- Adapt multi HB player
+x- store cellsize in map and use it, and call params
+x-do gmap test, and adapt for cellsize from map!
+x-set cellsize and params at the rigth moment also in simulation main_hs... and seekerhs?? for real robot-> do output of cellsize!!!!!
+  > done in GMap when loading from file or stream
+X-add 0.8 to all master*.txt map files
+    > sed -i '1s/$/0.8,/' master*.txt
+
+- check of belief returns when going away (experiments) and see behavior based on location
+- how to use no laser detect, and laser yes + vision no
+- do distance check: robot1 closer at goal than robot2.. for goalx
+- test with fixed person
+
+- for experiment we should use PF ALGO WITH exploration AT LEAST for 2 persons, such that
+   it takes into account the distance !!!!!!
+- for simulation: have person at fixed location for FIND (?)
+- PF algo
+
+
+-Fernando:
+ - 8-15 m detection laser
+ - at least 3 laser points to detect 1 leg at least
+ - if using tracker Ely-> uses more time
+ - idea: use laser points to 'clean' belief: i.e. everything behind the detection is cleaned
+ -      or use persons detected to increase the belief there slightly and behind (dynamic obstacles)
+ - communication not so important on our map master, because when starting at sides, they have to go through
+   the same locations anyway, only if they are close they start close, they will have advantage by communicating
+   to prevent going to the same side
+   also on cross map
+                         c
+                       a   b    -> robot starting in center, when comm. they should not go to same location
+                         d
+
+
+
+APR 2016
+X- prepare Ros HS code to make it able to use also the single robot algo's!
+X- Solve issue that robot has to stop before person, and not on same place!!!
+    -> changed follower to stop before person if visible and distToPerson>0
+x- Combine PF Highest belief with Follower !!
+    x-> first Combine with follower
+o- USE KF OR PF, but if PF -> only mean if not too much points
+    -> skip for now, since no big improvement, and brings more work
+- check params to check
+- we could apply the exploration technique to single PF -> not take max, but take into account belief, distance
+
+- BUG: in hsclient it gives error when painting the map and calling isVisible
+    in raytrace line1023 it gave an exception because it saw a visible cell as not visible,
+    COULD have to do with incorrect buffering..
+    TODO: check isVisible
+    solved by removing throw, and returning NOT_VISIBLE
+    NOTE: THIS HAPPENS when dyn. obst. used, check WHY!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+- why worse results with communication:
+    - does -nc work correctly?
+    - is sql script correct?
+    - is experiment script correct?
+    - issue in algo??
+    - check same start pos, and with/wo comm.
+
+
+mié abr 20 15:08:14 CEST 2016|Running:> ./hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u multi_j3c_find -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C -Sp start1-1.txt -A 127 -dl ../dmat/master2015s2.dmat.txt -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1   -sPM -nP 1000 -bz 4 -us 3   &
+mié abr 20 15:08:14 CEST 2016|Running:> ./hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u multi_j3c_find -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C -Sp start1-2.txt -A 127 -dl ../dmat/master2015s2.dmat.txt -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1   -sPM -nP 1000 -bz 4 -us 3
+
+mié abr 20 15:08:49 CEST 2016|Running:> ./hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u multi_j3c_find_nc -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C -Sp start1-1.txt -A 127 -dl ../dmat/master2015s2.dmat.txt -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1 -nc  -sPM -nP 1000 -bz 4 -us 3   &
+mié abr 20 15:08:49 CEST 2016|Running:> ./hsmomdp -Gfm -bi "" -Rfd -ud -s localhost 1120 -u multi_j3c_find_nc -E multi_j3c_1122_find_1 -oh -Ns 0 -S 500 -C -Sp start1-2.txt -A 127 -dl ../dmat/master2015s2.dmat.txt -w 1 -fd 0 -to 30 -em 30 -mo 0.5 -en 10 -mr 0 -md 4  -nr 3 -np 1 -nc  -sPM -nP 1000 -bz 4 -us 3
+
+TESTING:
+- 1 player PF
+build/release/momdp/hsmomdp  -oh -sPH -Gf -C -bi "out1.png" -Rfd -ud -u testmulti_s2 -oh -A 119 -ns 2500 -ni 1000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 2
+
+- 1 player POMCP
+build/release/momdp/hsmomdp  -oh -sCh -Gf -C -bi "out1.png" -Rfd -ud -u testmulti_s2 -oh -A 119 -ns 2500 -ni 1000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 2
+
+- multi POMCP*
+build/release/momdp/hsmomdp  -oh -sM -Gfm -C -bi "out1.png" -Rfd -ud -u testmulti_s2 -oh -A 119 -ns 2500 -ni 1000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 2
+
+- MULTI PF*
+build/release/momdp/hsmomdp  -oh -sPM -Gfm -C -bi "out1.png" -Rfd -ud -u testmulti_s2 -oh -A 126 -ns 2500 -ni 1000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 3 -nc
+
+*SHOULD BE 2!!
+TODO: now test with  ROS-> and fix
+
+
+
+x- using ros nodes:
+x  - initTwo doesn't finish?? and the getMultiHBs .. ?
+
+
+
+MAR 2016:
+- issue when compiling with ROS -> ROS uses opencv2, seekerhs is compiled with opencv3 ..
+   so error in creating img, it seemed to work when disabling SeekerHS::updateBeliefImg
+- Ad. HB-CR-POMCP contains belief and concentrates it close to seeker
+build/release/momdp/hsmomdp  -oh -sM -Gfm -C -bi "out1.png" -Rfd -ud -u testmulti_s2 -oh -A 126 -ns 2500 -ni 1000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 3 -nc
+build/release/momdp/hsmomdp  -oh -sM -Gfm -C -bi "out2.png" -Rfd -ud -u testmulti_s2_2 -oh -A 126 -ns 2500 -ni 1000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 3 -nc
+
+- TEST if it works for 1 and 2 players !! not only MULTI!
+
+when doing tests:
+
+-- step with obs
+step from <S:r2c1;H:r3c2;p=0>:  a=h(0)->next= a=h(0)->next=<S:r2.17076c1.09283[r2c1];H:r3.94762c2.81047[r3c2];p=0>,o=<S
+:r2.08952c0.881995[r2c0];H:[not set];p=0>,r=-1.41421;  a=n(1)->next= a=n(1)->next=<S:r2.17214c1.10577[r2c1];H:r3.30144c
+1.70196[r3c1];p=0>,o=<S:r2.03996c1.0462[r2c1];H:[not set];p=0>,r=-1.41421;  a=ne(2)->next= a=ne(2)->next=<S:r1.8848c0.7
+53532[r1c0];H:r3.16619c2.2668[r3c2];p=0>,o=<S:r1.99126c0.903782[r1c0];H:r3.09129c1.81481[r3c1];p=0>,r=-1.41421;  a=e(3)
+->next= a=e(3)->next=QDEBUG : SimulatorTest::hsSimulatorContTestContSimple() SimulatorTest::checkStateConsistentWithObs
+: Check consist.  <S:r2c1;H:r3c2;p=0>  with obs  <O:my:<S:r2c1;H:r3c2;p=0.333333>;others[#2]:<S:r3.79074c2.25802[r3c2];
+H:[not set];p=0.333333>;<S:r1.17014c3.3107[r1c3];H:[not set];p=0.333333>>  returned true:  1
+FAIL!  : SimulatorTest::hsSimulatorContTestContSimple() 'p<1.0' returned FALSE. ()
+Loc: [../test/src/POMCP/simulator-test.cpp(628)]
+
+
+
+
+
+
+JAN 2016:
+- see prev
+- for exp:
+    - use heading -uh
+    - PF: -nP, and -nPu
+    - heading std.dev. noise
+    - for search:
+    - start with same searcher pos: -Sp <seekerposfile>
+    - start with same hider pos file ...
+    - to stop for search: -S x-steps (stops after win or max x steps)
+    - stop after follow: -Sn x-steps (always does x steps)
+    - add -w win-dist (3?)
+x- for multi exp:
+    x- generate random path with 1st seeker being close/visible, others can be anywhere!
+
+x- use heading / velocity in POMCP HSSimulator (?)
+x- test particles, why doesn't work, due to lack of noise?? test with output to locations
+x- add option to filter particles by 'consistency' of having 'no obs' -> w=0 or very low for particles that are 'inconsistent' with obs
+X- ERROR: PF + HB
+    build/release/momdp/hsmomdp -m map3_10x10 -oh -sPH  -C -nP 1000 -bi belief.png -H
+    in:
+    HighestBeliefFollower::getNextPosRun
+    WARNING: HighestBeliefFollower::getNextPosRun: time passed and no last pos found
+    > forgot to set update step (-us)
+
+    build/release/momdp/hsmomdp -m map3_10x10 -oh -sPH  -C -nP 1000 -bi belief.png -H  -us 3
+
+x- left for sim.:
+  X- simulate max distance and prob of seeing in pomcp, use same code as in server (?)
+        -> in hssimulator
+  X- have options in main_seekerhs to enable/disable distance visib. probability
+     by default could be true
+     should send the params (x0, y0, k)  (stored in seekerhsparams) to server!
+     -> can be disabled by -dv
+     -> the params simNotVis_x0 y0 k0 are set on their default values
+  X- make option to stop 'game' when: either close or passed n steps
+  x- change random path generator for hider
+
+X- bug fix:
+    gen for hider(s):
+        build/release/autohider/hsautohider -create 10 ../../data/maps/map3_10x10.txt outpos.txt 1 5 C
+    gen for seeker:
+        build/release/autohider/hsautohider -create 10 ../../data/maps/map3_10x10.txt outpos2.txt 1 5 C outpos.txt V
+   CHECK! doenst seem to do what expected
+   try: distance, visib, not visbi, .. with multiple!!
+
+X- test POMCP, PF, with distance-based visibility, ..
+X- test if belief stays on places not visible (POMCP/HBPOMCP) in brl
+
+- connections on database accumulate
+        TODO IF timeout, and restart -> also disconnnect database!!
+        CHECK HOW TO DISCONNECT AND PREVENT
+
+- why are the times for seeker & hider so equal??
+
+x- QCoreApplication::exit -> added exit code in hstcpserver last methods, could cause issue
+
+X- bug which occurred only once!
+    hsmomdp: ../src/POMCP/hssimulator.cpp:468: virtual pomcp::State* pomcp::HSSimulator::step(const pomcp::State*, int, pomcp::State*&, double&, bool, const pomcp::Observation*): Assertion `prevHeading>=0' failed.
+  for cmd:
+    ./hsmomdp -Gf -bi "" -Rfd -ud -s localhost 1120 -u test2_H -of run1_walker.txt -Ns 0 -S 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -w 1 -fd 0 -to 30 -scc -ns 2500 -ni 1000 -bf -H
+   > SOLVED: heading was reset due to addNoiseToPos
+X- check usage of: _params->takeDynObstOcclusionIntoAccountWhenLearning
+    replace by true/false were applicable
+x- check where getInvisiblePoints used to use something related to distance:
+        - should be changed to include points with max distance, but only used by SmartSeeker and AutoPlayer::getInitPos()
+                both NOT used atm
+x- check isVisible
+x    getVisibilityProb
+x    or genRandVisib(bool visib)
+x- use of simNotVisibDist
+x- isStateConsistentWithObs should use this probability
+x- and is consistency check!
+x  getPossibleNextHiderPos should be changed !!!!!
+x- CHECK if PF is sufficiently different/better (signif)
+x- check where obs, and obs.genradnompos, and hssimulator.getAllINitiposes is used
+
+- TODO: IS It correct to init based on 1 obs, although it is chosen acc to approb
+
+- TODO TEST!!!! with multi!!
+    and unit test
+    and compile others!!!
+x- when using multiple robots, choosing closest goal, at least for 2?
+    > yes, when distance between robots>0, numRequiredPlayers<=3
+
+- TODO CHECK why the belief of the 'not visiblity' of other cuases 'clean' space around seeker, but not of own
+
+X- no communication flag does NOT seem to work
+   > only does not work when -tS (test seekerhs)
+
+- NOTE! less particles may improve behaviour!!
+    because when large amount of particles, it takes longer for them to diverge in case of not visible anymore
+
+x- if 1 visible then explorer should recalc goals
+    > already done, choosing a visible hider obs of any of the seekers
+
+
+
+- TODO ALERT!!!!!!! STRANGE BEHAVIOUR .. it seems to stay in one plays for a long time, EVEN THOUGH!!! GOAL is elsewhere!!!!
+        IT STAYED IN THE LOWER CORNER FOR MAYBE OVER 10 ITERATIONS!!!!!!!!
+        SEEMS NOT TO BE ABLE TO LEAVE!!!!!!!!!!
+
+
+multi:
+./hsmomdp -Gfm -bi "test.png" -Rfd -ud -s localhost 1120 -u test2_H -oh -Ns 0 -S 200 -C -A 120 -w 1 -fd 0  -sPM -nP 10000 -H  -bz 2 -us 3 -mo 0.5 -en 10 -md 4 -fd 0 -mr 0 -np 2 -nr 3 -em 25
+
+TODO: HOW IS THE CODE CALLED AS MULTI??? MAYBE FORGOT PARAM??
+
+
+./hsmomdp -Gfm -bi "test1.png" -Rfd -ud -s localhost 1120 -u test2_H -oh -Ns 0 -S 200 -C -A 120 -w 1 -fd 0  -sPM -nP 1000   -bz 2 -us 3 -mo 0.5 -en 10 -md 4 -fd 0 -mr 0 -np 1 -nr 3
+
+
+
+- params multi iros:
+      fme:
+      ./hsmomdp -Gfm -bi "test2.png" -Rfd -ud -s localhost 1120 -u test2_H2 -oh -Ns 0 -S 200 -C -A 119 -w 1 -fd 0  -sPM -nP 500  -bz 2 -us 3 -mo 0.3 -en 10 -md 4 -fd 0 -mr 0 -np 1 -nr 3  -em 10
+      brl:
+      ./hsmomdp -Gfm -bi "test2.png" -Rfd -ud -s localhost 1120 -u test2_H2 -oh -Ns 0 -S 200 -C -A 120 -w 1 -fd 0  -sPM -nP 1000  -bz 2 -us 3 -mo 0.3 -en 10 -md 4 -fd 0 -mr 0 -np 1 -nr 3   -em 25
+
+
+
+---
+- important bug fix @ TwoSeekerHBExplorer::calcExplorationEvaluation:  when checking the maxBelief, in fact it was using and storing the maxDist !!!
+
+---
+
+---CHANGED
+- ParticleFilterPlayer::initBeliefRun(): include multi, using HSSimulatorCont
+
+---
+
+>PF:
+build/release/momdp/hsmomdp -m map3_10x10 -oh -sPu  -C -nP 1000 -bi belief.png -csnh 1.0 -cshh 1.0 -S 3 -Gf
+build/release/momdp/hsmomdp -m map3_10x10 -oh -sPu  -C -nP 1000 -bi belief.png -csnh 1.0 -cshh 1.0
+
+build/release/momdp/hsmomdp -m map3_10x10 -oh -sPH  -C -nP 1000 -bi belief.png -csnh 1.0 -cshh 1.0 -S 3 -Gf -us 3
+
+
+>POMCP:
+
+TODO Nov 2015:
+- see previous todos
+- add limit of visibility: ~4 m
+- implement KF + PF (but first formalize!)
+- bug?: SeekerBeliefScore is not always stored, seems to happen when not using
+    tested with:
+        select count(*) n, count(SeekerBeliefScore) nSeekerBeliefScore, 100.0*count(SeekerBeliefScore)/count(*) percSeekerBelief,
+                sum(case when SeekerBeliefScore is null and SeekerReward=-1 then 1 else 0 end)/count(*) as BeliefScNullANDRew_1,
+            sum(case when not SeekerBeliefScore is null and SeekerReward>=0 then 1 else 0 end)/count(*) as BeliefScNOTNullANDRew_gt0
+        from tmpFindPhaseRes
+        where not Params like '%Follower LastP%';
+    Result: 80% of data of not heurstic followers have beliefscore
+            20% of all data: beliefsc=NULL and rew=-1
+            57%: beliefsc!=null and rew>=0
+        NOT SURE WHY..
+
+
+---
+
+
+Optimize experiments:
+- don't repeat old hsmomdp or 1 player multi.. for 1 player without comm
+- remove output (DEBUG*)
+- remove DEBUG (assert)
+- share memory per map
+- try to share whole object
+    if not possible: try to share the data structures inside (matrices)
+- delete the orginal data in memserver after sharing
+- or use boost (http://www.boost.org/doc/libs/1_59_0/doc/html/interprocess/sharedmemorybetweenprocesses.html) instead of QtSharedMemory
+- -> TODO: try to generate a GMap::writeToSharedMem
+        and GMap::readFromSharedMem
+        BUT HOW do we assure that we can read const void* otherwise void*
+        BUT does it then 'lock' the data?
+- use shared mem for ALL progs: hsserver, momdp, client, autohider
+    (maybe in constructor gmap..)
+
+
+
+TODO:
+- test with params of real experiments
+
+
+
+testing params of real:
+build/release/momdp/hsmomdp  -oh -sM -Gfm -C -bi "out2.png" -Rfd -ud -u testmulti_s2 -oh -A 119 -ns 15000 -ni 10000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 3
+build/release/momdp/hsmomdp  -oh -sM -Gfm -C -bi "out1.png" -Rfd -ud -u testmulti_s1 -oh -A 119 -ns 15000 -ni 10000 -cpiu 0.01 -cpfp 0.1 -cpfn 0.2 -mr 2 -fd 1.2 -np 1 -nr 3
+
+X- solve memory leak!!
+       run: ./hsmomdp -Gfm -bi "out.png" -Rff -ud -s localhost 1121 -u multitest1  -sMc -Ns 0 -Sn 100 -C -A 121 -dl ../dmat/master29e.dmat.txt -ns 1000 -ni 2000 -bz 5 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 9 -nr 10 -kg 10
+    -> was in hssimulator.step  -> randState was not deleted
+X- error when using more clients in one hsmomdp run:
+    build/release/momdp/hsmomdp  -Gfm  -Rff -ud -s localhost 1120 -u testmulti_s1 -oh -sMc -Ns 0 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3 -nr 4
+    hsmomdp: ../src/Smart/multiseekerhbexplorer.cpp:113: virtual Pos MultiSeekerHBExplorer::selectRobotPosMulti(): Assertion `!playerInfo.chosenGoalPos.isSet()' failed.
+    -> this happens for the 2nd (not 1st) autoplayer, so maybe I use _thisplayerinfo ...
+        but it seems to do prepare... for all... be sure all playerinfovec are set!!!!!
+                --> after init.. do a  !=NULL test
+    -> issue was that the MultiHBSeeker class set the chosenGoalPos for all playerInfo's, and when the other seekers
+    run in the same client, these playerInfo structs refer to their playerInfo variable. Therefor when the second
+    autoplayer had to calculate the next chosenGoal, it was already set by the other, and in the end this would mean
+    that the chosenGoalPos variable of all players would contain the value ONLY of the last player!
+    -> solved by checking if numPlayersInClient==1 when really setting the chosenGoalPos of the other players since this
+    is only for backup/visual
+- NOTE: updating belief (given obs) is like bootstrapping? (getting randomly samples from the old 'pool')
+- in ros sim: does NOT work -> does NOT explore, since all has a belief, goals change constantly
+    belief NOT updated with observation !!!
+- does not see observation
+- robot does not move in the end...maybe sim speed
+X- multihbexplorer: join is NOT working well -> do test
+    if joinging two same vectors, should result in same!!!
+        to do with ==??
+    -> in ROS the data was sent as 32 byte float, wheras it was stored (and compared as) double (64 bytes),
+        solved by doing the comparison with limits<float>::epsilon
+X - belief seems not to update well,
+    tried:
+    build/release/momdp/hsmomdp -Gfm -bi "out1.png" -Rff -ud -u testmulti_s1 -oh -sMc -Ns 0 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 2 -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 2 -cpip 0 -cppn 0 -cpiu 0 -cpfp 0 -cpfn 0
+    doesn't update well (IS THE INPUT, hider chosen well???)
+    BUT with -sCc (combi HSPOMCP-follower) it DOESNT WORK EITHER; WORSE WITH BELIEF FILTER !!!! !!!!
+    with -sCh: SAME as multiHBcombi, AND if hider disappears the belief stays at it's the seeker's location!!!
+    ALSO not working with -sCc!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ALSO with smaller map
+    ALSO with or without -bf (belief filter)
+    with the discrete it DOES work!!!!
+    !!!! --> issue should be in hssimulatorcont.cpp (compare to hssimulator.cpp)
+        CHECK belief filter
+        in step it always gets a known belief, does legal step, and puts it in  new blief (so if it was an incorrect belief, ti will keepit)
+        -> belief filter is necessary!! and check it!!!! why does it work in discrete???
+        -> ALSO check how simulation is done, and how wrong/inconsistent  states are generated there,
+            even though all probabilities and noise=0 (TODO CHECK If this is true) and if the noises are use correctly
+
+    test pomcp:
+     build/release/momdp/hsmomdp -Gfm -bi "out1.png" -Rff -ud -u testmulti_s1 -oh -scd -Ns 0 -A 119 -C -A 119 -ns 100 -ni 100
+    discrete OK (-scd)
+    but by adding continuous (-C) it maintains inconsistent states in the belief
+    -> problem is in lines 562-574 in hssimulator.cpp
+    -> 'solved' the issue by making use of the list of possible next (discrete) states
+        and checking if the random cont. pos is inside any of these
+
+X- WHY DOES IS THE OWN POSITTION CONTAINED IN THE LIST OF HIGHEST BELIEFS
+    -> was sending to own
+X- why is no cross shown in img, this is chosenGoalPos...why is it not set???? -> was to be updated after setting chosengoal
+X- WHY the beliefs are so different when one sees it, and other not, they should be same
+    due to communication and probability of using the observations
+    be sure that HSObservation contains observations of both players !!
+    It seems it ONLY uses the other's observation!
+        -> without SeekerHS it works
+               check if it is in gameclientconnector, otherwise might be in SeekerHS!!!
+    -> line 55 multiseekerhb.. at copying playerinfo to hbautoplayer.. it seems that hiderpos is
+        NOT copied, but 'only' when -tS, for this seeker the hider is visible 1st time, and
+        not to other seeker
+        BUT without -tS it seems to work well.. should have to do with either: seekerhs
+            or gameconnectorclient
+    - TEST twoseekerhb...
+   -> does this really happen?? test in sim ROS
+   -> NOTE: it is really important to tune -em x -> max distance range (should be smaller for the fme, e.g. 5, and big for the other(s))
+   -> with -tS the robot which is NOT seeing the hider has a high belief only close to the hider  pos
+      whereas the robot seeing it does not, without -tS the belief in both is maintained but  there is a higher conconetration at the hider location
+   -> solved, problem was in use of another probability var (PlayerInfo.hiderObsTrustProb) in some place instead of PlayerInfo.useObsProb
+      -> now removed hiderObsTrustProb
+X- belief is maintained even when person is not there anymore -> due to contUpdInconsistAcceptProb (-cpiu) which is
+    0.3 by default, this might be too high, we might want to tune it again for real experiments
+x- check again error of scripts HSObs ...
+X- seeker belief score is not shown in csv file! (be sure that it is updated)
+  NOT in csv, since in real experiments we do not have the ground truth
+  in sim: in gameconnectorclinet, before sending to server
+X- neither is seeker reward (be sure it is updated, if not given by this autoplayer, use child, e.g. POMCP)
+X- check for mulitplayer in seekerhs
+X- Seekerhslog!!!
+X- implement code for ROS
+X- check in simulator
+X - when belief high of 1 player for a certain location, but for
+    other isn't -> then it will stay at that location even though it's not there
+    -> no, with -tS problem was that each seeker chose the other as goal
+- for big maps and precalculated distance could create a distance class that uses the file
+    if file small, load all in memory, if not only get the specific location (using seek in file
+    but map size is (rows*cols)^2
+    Using the whole campus nort in sim would be 12 x (60m x 55m) ~ (720m x 660m)
+    with 1 m per cell: (720x660)^2 = 2.3e11
+    with 4 bytes per double: ~ 9.03e11 bytes -> 841.2 GiB
+    to fit in memory (RAM disk):
+        should at max be 800MiB -> reduce by a factor 1000, that means each cell size with a factor of 1000^1/4 ~ 5.6
+    better approach: 800 MiB -> 2.15e11 doubles
+            -> (800*1024^3/4)^(1/4) ~ 680 x 680 cells (with doubles), or
+            -> (800*1024^3/2)^(1/4) ~ 809 x 809 cells (with floats)
+
+- for simulation needs to be tuned!!!
+    -TODO: simulations for tuning params
+        could use
+- check debug output and assert -> either pot DEBUG_ or remove
+- todo: in theory the multi HB seeker could be without communication of HBs, since they share observations -> with n_belief sufficiently high
+    the beliefs should grow equal (TODO: PROOOF!!!!) and high belief share might not be necessary, BUT
+    if during some time they didn't see eachother the belieifs can change, therefore share highest beliefs
+- todo proof: if n_sim and/or n_belief high, and no noise -> perfect belief (convergence)
+- todo: learn params with simulated annealing / other method
+    cn this be done in the main application?
+        instead of using main app
+
+- todo: sim for n autoplayers
+- TODO: check in gameclientconnection->if NoCommunication -> do not read hblist, seeker1pos....
+- check if throwing exception or assert when out of area first step
+- in TwoHBSeeker .. chosenGoal.isSet when it shouldn't be (selectGoal)
+
+
+
+
+-Gfm -bi "out1.png" -Rfd -ud -u testmulti_s1 -oh -sCc -Ns 0 -Sn 200 -C -A 119 -ns 10 -ni 10 -bz 1 -us 3 -d 1 -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 2 -cpip 0 -cppn 0 -cpiu 0 -cpfp 0 -cpfn 0
+-bf
+
+
+
+xhider player not necessary in gameconnector
+x n or in seekerhs, is only the observation!
+
+
+20/7
+error:
+TODO THIS IS  BECAUSE IN HSObservation::readFromPlayerInfo THE obs.readfromplayer returns FALS
+which is due to player.nextpos==False TODO SOLVE!!!!!!
+WHEN IS THIS ??? FIRST ???? OR LATER???????????????
+SEE DB !!!!!
+SEEMS FIRST.... MAYBE NOT DONE IN INIT
+
+
+
+
+
+Connected to server!
+GameConnectorClient::sendInfoToServer: Sending distance map file name to server: ../dmat/brl29a.dmat.txt
+GameConnectorClient::sendInfoToServer: SENDING: opp=run1_walker.txt; actionFile=run1_walker.txt
+GameConnectorClient::sendInfoToServer: player sent his name : multi1_nc_op_s2
+Waiting for server
+
+GameConnectorClient::readInitInfoFromServer: Reading data..
+GameConnectorClient::readInitInfoFromServer: Loading distance matrix:
+GameConnectorClient::readInitInfoFromServer: Reading data..
+GameConnectorClient::readInitInfoFromServer: Loading distance matrix: ok
+Starting game, players from this client [auto]: {2[0xf1ab78]|(Seeker)!}
+Other players: {0[0xf1f9e0]|(Seeker)!} {1[0xf31cc0]|(Hider)!}
+GameConnectorClient::readInitInfoFromServer: Calculating init pos:
+Name:File_start2_1.txt
+FromListHider::openListFile: opening file 'start2_1.txt': ok
+Map: /home/agoldhoorn/iri-lab/labrobotica/algorithms/hide-and-seek/data/maps/brl/brl29a.txt
+Number of hiders: 1
+Number of steps: 1
+
+Now ready to read file
+ - {2[0xf1ab78]|(Seeker)!Pos=r74.0605c12.5623[r74c12];}
+GameConnectorClient::sendInitPos: Sending init pos:
+ok
+Starting game, players from this client [auto]: {0[0x1587b78]|(Seeker)!}
+Other players: {1[0x158ca10]|(Hider)!} {2[0x159ecc0]|(Seeker)!}
+GameConnectorClient::readInitInfoFromServer: Calculating init pos:
+Name:File_start1.txt
+FromListHider::openListFile: opening file 'start1.txt': ok
+Map: /home/agoldhoorn/iri-lab/labrobotica/algorithms/hide-and-seek/data/maps/brl/brl29a.txt
+Number of hiders: 1
+Number of steps: 1
+
+Now ready to read file
+ - {0[0x1587b78]|(Seeker)!Pos=r21.4743c13.6654[r21c13];}
+GameConnectorClient::sendInitPos: Sending init pos:
+GameConnectorClient::serverReadyRead: message type:read server update
+GameConnectorClient::serverReadyRead: message type:read server update
+Dyn obstacles (#0):
+Dyn obstacles (#0):
+GameConnectorClient::readServerUpdate: RECEIVED: status=running(0), players: {0[0xf1f9e0]|(Seeker)!Pos=r21.4743c13.6654[r21c13];NPos=r21.4743c13.6654[r21c13];HObs=r5.09683c12.6653[r5c12],p=0.5}, {1[0xf31cc0]|(Hider)!Pos=r5.09683c12.6653[r5c12];NPos=r5.09683c12.6653[r5c12];HObs=[not set]}, {2[0xf1ab78]|(Seeker)!Pos=r74.0605c12.5623[r74c12];NPos=r74.0605c12.5623[r74c12];HObs=r5.09683c12.6653[r5c12],p=0.5},
+GameConnectorClient::readServerUpdate: RECEIVED: status=running(0), players: {0[0x1587b78]|(Seeker)!Pos=r21.4743c13.6654[r21c13];NPos=r21.4743c13.6654[r21c13];HObs=r5.09683c12.6653[r5c12],p=0.5}, {1[0x158ca10]|(Hider)!Pos=r5.09683c12.6653[r5c12];NPos=r5.09683c12.6653[r5c12];HObs=[not set]}, {2[0x159ecc0]|(Seeker)!Pos=r74.0605c12.5623[r74c12];NPos=r74.0605c12.5623[r74c12];HObs=r5.09683c12.6653[r5c12],p=0.5},
+=== INIT BELIEF (multi) ===
+=== INIT BELIEF (multi) ===
+--- init b(mul): {0[0x1587b78]|(Seeker)!Pos=r21.4743c13.6654[r21c13];NPos=r21.4743c13.6654[r21c13];HObs=r5.09683c12.6653[r5c12],p=0.5} ---
+--- init b(mul): {2[0xf1ab78]|(Seeker)!Pos=r74.0605c12.5623[r74c12];NPos=r74.0605c12.5623[r74c12];HObs=r5.09683c12.6653[r5c12],p=0.5} ---
+HighestBeliefFollower::initBelief[multi]:
+HighestBeliefFollower::initBelief[multi]:
+HSPOMCP::initBeliefRun
+Exploration constant:   1
+Expand count:           2
+HSPOMCP::initBeliefRun
+Consist. check seeker d:0.3
+Exploration constant:   1
+Consist. check hider d: 0.3
+Expand count:           2
+Consist. check seeker d:0.3
+Consist. check hider d: 0.3
+Noise will be added
+Noise will be added
+HSObservation::readFromPlayerInfo: WARNING could not read {0[0xf1f9e0]|(Seeker)!}
+HSObservation::readFromPlayerInfo: WARNING could not read own player info: {2[0xf1a938]|(Seeker)!}
+HSObservation::readFromPlayerInfo: WARNING could not read {2[0x159ecc0]|(Seeker)!}
+HSObservation::readFromPlayerInfo: WARNING could not read own player info: {0[0x1587938]|(Seeker)!}
+Exception at HSPOMCP: [Exception caught] - pomcp::HSObservation::HSObservation(const PlayerInfo*, const std::vector<PlayerInfo*>&) at ../src/POMCP/hsobservation.cpp:19
+Exception at HSPOMCP: [Exception caught] - pomcp::HSObservation::HSObservation(const PlayerInfo*, const std::vector<PlayerInfo*>&) at ../src/POMCP/hsobservation.cpp:19
+Error: Problems while loading the HSObservation
+Error: Problems while loading the HSObservation
+GameConnectorClient::serverReadyRead: Exception: [Exception caught] - virtual bool pomcp::HSPOMCP::initBeliefRun() at ../src/POMCP/hspomcp.cpp:211
+Error: [Exception caught] - pomcp::HSObservation::HSObservation(const PlayerInfo*, const std::vector<PlayerInfo*>&) at ../src/POMCP/hsobservation.cpp:19
+Error: Problems while loading the HSObservation
+GameConnectorClient::serverReadyRead: Exception: [Exception caught] - virtual bool pomcp::HSPOMCP::initBeliefRun() at ../src/POMCP/hspomcp.cpp:211
+Error: [Exception caught] - pomcp::HSObservation::HSObservation(const PlayerInfo*, const std::vector<PlayerInfo*>&) at ../src/POMCP/hsobservation.cpp:19
+Error: Problems while loading the HSObservation
+
+
+
+
+
+
+TODO: also sim ibgger more challenging mapsl try to copy other maps
+from hollinger et al?
+
+
+hsmomdp -Gfm -bi "out1.png" -Rff -ud -u testmulti_s1 -oh -sMc -Ns 0 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3 -tS
+hsmomdp -Gfm -bi "out2.png" -Rff -ud -u testmulti_s2 -oh -sMc -Ns 0 -Sn 200 -C  -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3 -tS
+
+
+hsmomdp -Gfm -bi "out1.png" -Rff -ud -u testmulti_s1 -oh -sMc -Ns 0 -Sn 200 -C -A 119 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 5 -mo 0.6 -en 5 -md 4 -fd 0 -mr 0 -np 3 -tS
+hsmomdp -Gfm -bi "out2.png" -Rff -ud -u testmulti_s2 -oh -sMc -Ns 0 -Sn 200 -C  -A 119 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 5 -mo 0.6 -en 5 -md 4 -fd 0 -mr 0 -np 3 -tS
+
+
+hsmomdp -Gfm -bi "out1.png" -Rff -ud -u testmulti_s1 -oh -sMc -Ns 0 -Sn 200 -C -A 119 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 5 -mo 0.6 -en 5 -md 4 -fd 0 -mr 0 -np 2 -
+
+
+./hsmomdp -Gfm -bi "" -Rff -ud -s localhost 1121 -u testmulti_s1 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+
+./hsmomdp -Gfm -bi "" -Rff -ud -s localhost 1121 -u testmulti_s2 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+
+
+
+
+./hsmomdp -Gfm -bi "" -Rff -ud -s localhost 1121 -u testmulti_s1 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 4
+./hsmomdp -Gfm -bi "" -Rff -ud -s localhost 1121 -u testmulti_s2 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 4
+./hsmomdp -Gfm -bi "" -Rff -ud -s localhost 1121 -u testmulti_s3 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 4
+
+
+
+19/7
+no error but just stops, check params? compare to params below (before, this ones are from exp tests)
+./hsmomdp -Gfm  -Rff -ud -s localhost 1121 -u testmulti_s1 -oh -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+./hsmomdp -Gfm -Rff -ud -s localhost 1121 -u testmulti_s2 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+
+tested with -of ..
+or -ow
+or seperate hsautohder .. .. 10
+
+
+
+./hsmomdp -Gfm  -Rff -ud -s localhost 1120 -u testmulti_s1 -ow -sMc -Ns 0 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+./hsmomdp -Gfm -Rff -ud -s localhost 1120 -u testmulti_s2 -ow -sMc -Ns 0 -Sn 200 -C  -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+
+
+19/7
+GameConnectorClient::serverReadyRead: message type:read server update
+Dyn obstacles (#0):
+GameConnectorClient::readServerUpdate: RECEIVED: status=running(0), players: {0|(Seeker)Pos=r61.9601c8.2554[r61c8];NPos=r61.9601c8.2554[r61c8];HObs=[not set],p=0.5}, {1|(Hider)Pos=r15.6352c10.4312[r15c10];NPos=r15.6352c10.4312[r15c10];HObs=[not set]}, {2|(Seeker)Pos=r61.9601c8.2554[r61c8];NPos=r61.9601c8.2554[r61c8];HObs=[not set],p=0.5},
+hsautohider: ../src/Base/autoplayer.cpp:215: virtual bool AutoPlayer::initBelief(GMap*, PlayerInfo*): Assertion `checkSumObsProbIs1()' failed.
+ok
+with clients:
+./hsmomdp -Gfm -Rff -ud -s localhost 1121 -u testm_s1 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0 -np 3
+./hsmomdp -Gfm  -Rff -ud -s localhost 1121 -u testm_s2 -of run1_walker.txt -sMc -Ns 0 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -mo 0.6 -en 10 -md 4 -fd 0 -mr 0
+
+-> seems to be sent the useObsProb ... print values (?)
+
+
+assure that the order is the same, and that they have different goals... WHY DOENST THIS WORK??
+are they not ordered correcty??
+
+16/7
+- try to throw cexception when out of map, now seems it stops due other problem, maybe assert
+
+- prep seekerhs + ROS
+- seekerhslog
+
+
+- note: pomcp might req rewards to be normalized.. at least to have same kind of funcitonality with other maps
+    however, if we focus on same distance importance (e.g. being within 2-3 m) independent of the map
+    size, then it shouldn't matter
+
+10/7/2015
+tested two players
+build/release/momdp/hsmomdp -Gf2 -bi out1.png -Rfd -ud -u test1 -oh -s2c -C -A 45 -ns 1000 -ni 100  -np 3
+build/release/momdp/hsmomdp -Gf2 -bi out2.png -Rfd -ud -u test2 -oh -s2c -C -A 45 -ns 1000 -ni 100  -np 3
+
+
+build/release/momdp/hsmomdp -Gfm -bi out1.png -Rfd -ud -u test1 -oh -sMc -C -A 45 -ns 1000 -ni 100  -np 3
+build/release/momdp/hsmomdp -Gfm -bi out2.png -Rfd -ud -u test2 -oh -sMc -C -A 45 -ns 1000 -ni 100  -np 3 -en 3
+
+
+
+03/07/2015
+
+Test of MCTS: MCTSTest fails in some situations:
+----------
+[testMCTSContLoadedMapNormalMove]**14) UPDATE** with obs=<O:my:<S:r10.0828c0.434514[r10c0];H:r19.9787c9.4294[r19c9]>;others[#2]:<S:r9.85975c7.78794[r9c7];H:r1.66764c0.513024[r1c0]>;<S:r18.7336c18.4487[r18c18];H:r2.32935c17.208[r2c17]>>
+MCTS.update (action=sw(6); obs=<O:my:<S:r10.0828c0.434514[r10c0];H:r19.9787c9.4294[r19c9]>;others[#2]:<S:r9.85975c7.78794[r9c7];H:r1.66764c0.513024[r1c0]>;<S:r18.7336c18.4487[r18c18];H:r2.32935c17.208[r2c17]>>)
+POMCP::Update: using existing node as root: O[471352]:v=-143.842 (#=1),#b=1,#c=9
+Generating new belief points, #beliefs=1, from old belief:#=20
+New belief points generated, new size=20, total retries:0
+MCTS.update done belief expanded to: O[471352]:v=-143.842 (#=1),#b=20,#c=9
+[testMCTSContLoadedMapNormalMove]**14) SELECT ACTION**
+MCTS.selectAction
+MCTS.uctSearch (histDepth=0; #sims=100)
+MCTS.uctSearch done
+New tree: O[471352]:v=-157.63 (#=101),#b=20,#c=9
+MCTS.selectAction done: uctSearch, action=sw(6)
+[testMCTSContLoadedMapNormalMove]**14 ACTION: sw(6), tree depth: 4
+[testMCTSContLoadedMapNormalMove]**It 15**
+FAIL!  : MCTSTest::testMCTSContLoadedMapNormalMove() 'obs->ownSeekerObs.seekerPos.isSet()' returned FALSE. ()
+   Loc: [../test/src/POMCP/mcts-test.cpp(245)]
+---------
+
+06/2015
+- HSSimulator::step: SIM_HIDER_TYPE_SMART or other could be following a certain path, i.e.:
+                        - either like 'walker' (choosing random goals)
+                        - or: higher probab. of following same dir, if failed/otherwise: go other/random dir
+
+
+- unit testing:
+    http://doc.qt.io/qt-5/qtest-overview.html
+    http://doc.qt.io/qt-5/qttestlib-tutorial1-example.html http://doc.qt.io/qt-5/qttestlib-tutorial2-example.html
+
+- uml diagrams:
+    http://www.uml-diagrams.org/
+    http://www.smartdraw.com/
+
+
+
+---
+- new experiements:
+    - w other people (not knowning of robotics)
+        -> better detection required
+    - for better detection Sergi&Fernando check:
+        - better camera (4 / 5, for 'copy' of ladybug)
+            - first Sergi buys 1 to do checks, then if ok-> continues
+        - if not that, try improve other cam with 3
+        - !! me-> different weight for the robots, take Tibi's obs less into account (ALSO when person detected)
+        - improve fusion laser-tag detection:
+            - now a big delay in tag, therefore fusion with laser detection is done with higher distance (1-2 m??)
+                could be done by 'delaying' laser detections, which can be done by buffering them (or TF's(??))
+    - other idea:
+        - use cameras in BRL: http://wiki.iri.upc.edu/index.php/Network_Access
+            -> would require to change model: or use as extra observations only..
+                used for update of belief! But then take into account the location
+                    but maybe not use consistency check
+            - if single camera, then use the direction in which it looks, but since the cameras hang on the wall
+                the observations in the backside of the camera are implicitely excluded by the vision limitation
+        - use the pioneer cam
+
+
+
+------------
+
+- TEST rosbag 2 bags
+
+x?- assert error at l417 @ multiseekrhbexpl..cpp
+  happens after some time when the hider is visible to both..
+  belief of other >1 (?)
+
+X - 2nd problem: the belief of BOTH is not updated by other's observation (of NOT seeing the hider)
+  ONLY when the hider is visible by the other
+
+X - In hssimulatorcont -> implement getpossiblenexthiderposes, TODO: add probability of
+                    seeing wrongly and therefore 'keeping' prob of inconsistent param
+                    -> if inconsistent -> a prob of cont_false_pos_prob: keep it (as an option of next hider pose)
+
+X- check seekerhs (-tS and with dyn. obs: -tS)
+
+X- check what happens if not sending poses of other robot (-tN)
+
+
+x- for finder/multiseekere..: don't use angle, always mindistseekers
+
+
+X- remove debug of writing img in MCTS
+
+X- store stats: distance s-r s1-s2 etc .. ALSO store in DB!!!!!
+    -> make statitics
+
+X- valgrind
+
+- on real robot: c++11?? otherwise maybe check for 2003?? -> to at least use 'random'
+
+(- LATER: should have some prob of init location that is visible, or based on distance, or based on VISIBILITY!!!!
+    -> MODEL VISIBILITY!!!
+)
+
+- why no belief?? -> probarly too little belief points (>>nb, and >>beleif cell size)
+- why so much belief in places where robot is -> maybe too high belief?
+
+x- PROBLEM trying run experiments automatically (see bug)
+
+x- in seekerhs : check if sending detected pos ('thisHiderPos/lasthiderpos)
+        sending filtered hider pos by own seeker
+        -> is ok, can be used to see by which it is detected
+
+x- with p_false_neg -> at MCTS.update filter, a state in the belief is not removed
+
+
+X- make option to not have any comunication
+
+x- test walking pos
+
+x- init seeker pos: us -Sp  and autohider -create ...
+
+- filter persons which are on the own/other's robot location
+
+- change exit(..) to QCoreApplication::exit(..)  WHERE Qt is used!
+
+- store all png belief images??
+
+- or reduce step distance or increase wait time such that propogation not too fast
+    -> time betw itt 1000, num sim higher + num belief + ...
+
+- TODO: - allow false negative in update? + false positive?
+            - simulator: initState(s), step
+        - limit vision:
+            - range (may be threshold or 'gaussian')
+            - angle
+
+- DONE - added abs() to l790 multiseekerhbexpl..
+        important for comparison!!
+
+x- why is hsserver in background running????????
+    some case where nto exiting
+    why blocked after some time????
+    -> should not be mysql - this has very high max
+
+x- check results mysql -> single is better, TRY IN SIMULATION HSCLIENT/GUI -> maybe
+    select MapName,SolverTypeName,autoWalkerN,count(*),avg(d_shEuc) avg_d_shEuc, avg(d_s2hEuc) avg_d_s2hEuc, avg(d_sh_min) as avg_d_sh_min,
+            avg(d_shEuc_min) as avg_d_shEuc_min, sum(isClose)/count(*) as isClosePerc
+    from GameExt g left join GameLineExt l on g.id=l.GameID
+    where SeekerUserID in (12,13,14)
+    group by MapName, SolverTypeName,AutoWalkerN;
+
+        seekerid: 12,13,14 -> multi
+        33,34 -> multi no comm
+
+    follower or adaptive cr-pomcp ...
+        really follows at distance 0 (and 1 if walking, because of same speed)
+    --> if 'simulating' (minDist==0 && followDist==0) ->
+    --> issue as in AutoPlayer.getNextStep: in first check (if current pos closer than step size to goal, then next step is goal)
+            (this was: next step = current step)
+
+
+
+- tuning params: (make a 'scientific' choice)
+    - multiSeekerOwnObsChooseProb (=0.6? or depend on how good vision, or distance, etc)
+    - multiSeekerExplorerCheckNPoints=5 ?
+    (- followPersonDist, multiSeekerFollowAngle_rad)
+    - multiSeekerSelectPosSmallDistBetwGoals (=4)
+    - weights for explorer:
+        double y = _params->multiSeekerExplorerUtilWeight * u - _params->multiSeekerExplorerDistWeight * d / maxDist +
+                _params->multiSeekerExplorerBeliefWeight * highestBeliefVec[i] / maxBelief;
+                //utilW=0.4; distW=0.4; beliefW=0.2
+    - multiSeekerExplorerMaxRange=10 -> 25 (because is used to 'spread' the goals, and even though at 25 m visibility might be low,
+                                            it is still possible to choose close goals, but their probab. of being chosen are reduced)
+    -> take some based on 'experimenting' and then tell in paper that they were chosen in that way (by doing a few exp), but that
+        more detailed fine-tuning is required
+
+    -mo choose-own-obs-prob             choosing own obs prob (in case of inconsist.)
+        (multiSeekerOwnObsChooseProb)
+        now: 0.6
+    -ew util-w dist-w belief-w          weights for explorer formula
+        (_params->multiSeekerExplorerUtilWeight * u - _params->multiSeekerExplorerDistWeight * d / maxDist +
+                    _params->multiSeekerExplorerBeliefWeight * highestBeliefVec[i] / maxBelief;)
+        now: 0.4, 0.4, 0.2
+
+    -em max-range                       max-range used
+        (multiSeekerExplorerMaxRange)
+        now: 25 (was 10)
+
+    -en n-highest-belief-points         choose from the n highest belief points
+        (multiSeekerExplorerCheckNPoints)
+        now: 10 (was 5)
+            why: enough points to have distirbution of locations far enough and close enough
+
+    -md small-dist                      small dist for selecting poses
+        (multiSeekerSelectPosSmallDistBetwGoals)
+        now: 4
+            why: rough estimate, could be bit more,b ased prt on vision/max_range
+
+        brl29a (120):
+            ./hsmomdp -Gf2 -Rff -ud -s localhost 1120 -u test_s1 -oh -sM -Ns 0.1 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -bi seeker1b.png -en 10
+            ./hsmomdp -Gf2 -Rff -ud -s localhost 1120 -u test_s2 -oh -sM -Ns 0.1 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -bi seeker2b.png -en 10 -fd 0
+
+        fme (119):
+            (for small maps reduce max range, and incl fd=0.1 to prevent them being on same place (?))
+            ./hsmomdp -Gf2 -Rff -ud -s localhost 1120 -u test_s2 -oh -sM -Ns 0.1 -Sn 200 -C -A 120 -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 10 -bi seeker2b.png -en 10 -fd 0.1
+
+        master29e (121):
+
+
+
+
+    -fd 0 (for sim)
+    -mr 0 (for sim)
+
+    -> first thought that formula can be simplified by only checking belief and distance, like:  w_d * -d / d_max + w_b * b / b_max
+        and then choose goal for each robot which is closest
+        BUT, the utility is usefull to prevent the two goals being chosen too far
+        Instead: choose always the goal which is closest to the robot!
+
+        >Other possible improvement is to create regions in belief, and select those as a center, maybe maximize regions based on vision/obstacles/max range
+        Or grow regions based on belief points distances (but may be high calc. req. ...)
+
+    -> ISSUE: when close to hider it 'switches' close/back .. maybe due to fact that it doesn't do check of 'if NOT moved since last' ..then do nothing
+        (e.g. |s-s'|<0.1*hiderStep , now set to hiderNotMovingDistance=0.5*hiderStepDistance)
+        ALSO: when following, it follows at a dist of 2, is this due compensation??
+        -- TODO - why test doesn't work
+
+ - experiments like humanoids 2014:
+    maps: brl, fme
+    solvers:
+        - adaptive highest belief .. adapter
+        - multi - with comm
+        - multi - without comm
+        - autowalkerN: 0,10
+
+- define exp:
+    - maps (brl, master29e, fme?)
+        bcn_lab/fme2014_map4.txt
+        brl/brl29a.txt
+        brl/master29e.txt
+
+    - compare something?
+        - communication / no comm (-tN)
+        - to prev exp with 1 robot
+
+    - use walker
+
+    - do without 'debug', and no output text
+
+    - follow dist=0 (?, since focus is not 'realistic' path planning)
+    - max range: 10 / 25 (-em)
+
+    - pref results: /home/agoldhoorn/agoldhoorn/papers/JFR2014_siSSRR/results/res140617_0914.ods (?)
+    - pref sim scripts: /home/agoldhoorn/iri-lab/labrobotica/algorithms/hide-and-seek/trunk/scripts/exp/201406/runexp4.sh
+    - from hsgamelog2014 db:
+        select distinct Seeker,SolverTypeName,StopAfterNumSteps,OpponentType,MapName,
+        WinDist,SimObsNoiseStd,SimObsFalseNegProb,SimObsFalsePosProb from GameExt where SeekerUserID=44
+        -params:
+            - Solvers:
+                Follower LastPos Exact
+                POMCP
+                Highest Belief Follower POMCP
+                Combi: POMCP & Follower
+                Combi: Highest Bel. POCMP & Follower
+            - Num steps: 200, 100 (FME) [StopAfterNumSteps]
+            - opponent: 11 (OPPONENT_TYPE_HIDER_FILE)
+            - allowInconsistObs=False
+            - SimObsFalseNegProb = SimObsFalsePosProb = 0
+            - SimObsNoiseStd = 0, 0.1, 1, 10 (humanoids: 0)
+            - AutoWalkerN = 0, 10, 50 (humanoids: 0/10)
+            -update steps: -us=3
+
+
+
+
+
+
+X - fix writing log (in seekerhs)
+
+X- check if all stored for DB log
+    TODO in HSGameLogDB::addGameStep (and sql)
+        - store goalvectors (NULL of not 2seekers) + belief (NULL if not available..)
+        - ADD chosen goal by both!! (SHOULD be sent by seeker, eg new message 'chosenpos')
+        new_seeker1_froms1_x
+        new_seeker1_froms1_y
+        new_seeker1_froms1_row
+        new_seeker1_froms1_col
+        new_seeker2_froms1_x
+        new_seeker2_froms1_y
+        new_seeker2_froms1_row
+        new_seeker2_froms1_col
+        new_seeker1_froms1_belief
+        new_seeker2_froms1_belief
+        new_seeker1_froms2_x
+        new_seeker1_froms2_y
+        new_seeker1_froms2_row
+        new_seeker1_froms2_col
+        new_seeker2_froms2_x
+        new_seeker2_froms2_y
+        new_seeker2_froms2_row
+        new_seeker2_froms2_col
+        new_seeker1_froms2_belief
+        new_seeker2_froms2_belief
+        new_seeker1_goal_x
+        new_seeker1_goal_y
+        new_seeker1_goal_orient
+        new_seeker1_goal_row
+        new_seeker1_goal_col
+
+
+- check orientation calcultion (from example seems only -pi/2 or pi ..)
+
+---- BUGS: ---
+X 1) on map master29e, ns=10000/20000 ni=5000
+    one robot:
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r58.4628c29.77[r58c29] but observation is r58c29
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r58.4175c29.8977[r58c29] but observation is r58c29
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r58.7156c32.8797[r58c32] but observation is r58c32
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r58.6338c33.0003[r58c33] but observation is r58c33
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r59.3836c26.0318[r59c26] but observation is r59c26
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r59.434c26.8574[r59c26] but observation is r59c26
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r60.6132c8.96215[r60c8] but observation is r60c8
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r64.5007c18.5384[r64c18] but observation is r64c18
+    other:
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r60.3485c33.0292[r60c33] but observation is r60c33
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r60.2852c33.1192[r60c33] but observation is r60c33
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r60.4836c35.6803[r60c35] but observation is r60c35
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r63.664c31.9513[r63c31] but observation is r63c31
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r64.6257c26.0146[r64c26] but observation is r64c26
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r64.5005c26.5307[r64c26] but observation is r64c26
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r65.6799c23.9278[r65c23] but observation is r65c23
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r65.6152c24.0341[r65c24] but observation is r65c24
+    HSSimulator::checkNextStateObs: ERROR: hider pos was <not set>, now is r66.9434c19.3308[r66c19] but observation is r66c19
+
+    @ HSSimulator::checkNextStateObs -> maybe to do with continuous being different? use distance?
+        or why is 'not set'.. using observation??
+
+    -> for example when the hider is NOT hidden, maybe it is not an error
+    -> this was a check done for the discrete case, it checks consistency through exact equality
+        -> now using the 'continuous' version in which this is not checked
+
+X 2) in ROS:
+    dies with:
+    [ INFO] [1423769890.500720003]: FAF_PROCESS_GOALS
+    [dabo/faf-1] process has died [pid 26424, exit code -11, cmd /home/agoldhoorn/iri-lab/iri_ws/devel/lib/tibi_dabo_faf/tibi_dabo_faf ~joy:=/dabo/sensors/joy ~people:=/dabo/tag_people/tag_people ~odom:=/dabo/segway/odom /dabo/move_base:=/dabo/move_base ~observations_out:=~observations ~goals_out:=~goals ~observations_in:=/tibi/faf/observations ~goals_in:=/tibi/faf/goals __name:=faf __log:=/home/agoldhoorn/.ros/log/cf8bca8a-b2ed-11e4-a16d-f04da2dcc98b/dabo-faf-1.log].
+    log file: /home/agoldhoorn/.ros/log/cf8bca8a-b2ed-11e4-a16d-f04da2dcc98b/dabo-faf-1*.log
+
+    arrives to 'FAF_PROCESS_GOALS' (l194 alg_node)
+    but not to SeekerHS::selectMultiSeekerPose (no output shown!)
+    -> problem was out of bounds vector (in ros alg)
+
+X 3) assert failure due explorer did not find an index -> -1
+    -> due to maxDist=0 the 'scores' were divided by 0
+       -> solved by always making maxDist=1 if maxSize==0
+
+X 4) suddenly disconnected gui client... (recompile client??)
+    -> error in server while reading chosen pos
+
+x 5) With ROS: after some time (20s?) without tag, some seconds a tag for tibi, then moved to 'laser' and then crashed (thus directly after non-visible a crash:)
+
+        Deduce action r28.8485c15.1515[r28c15]->r27c15[d=1.85472]:n(1)
+        MultiSeekerHBExplorer::getNextRobotPoses2: [s1:r27c15,h:<-1>[not set];s2:r11c25,h2:[not set]] - hidden for both, pass both
+        HSPOMCP.getNextAction2: update, given action ne(2) different than done action n(1)
+        HSPOMCP.getNextAction2: call update with: action done=ne(2), seeker 1 obs=<S:r27c15;H:[not set]>, seeker 2 obs=<S:r11c25;H:[not set]>, p_obs1=0.6
+        MCTS.update (action=n(1); obs=<S:r27c15;H:[not set]>)
+        POMCP::Update: using existing node as root: O[2821966]:v=0.118519 (#=135),#b=135,#c=9
+        after filtering, #beliefs=0
+        Generating new belief points, #beliefs=0, from old belief:#=3000
+        WARNING: no consistent old belief
+        New belief points generated, new size=0
+        WARNING: POMCP::update: for new belief no states propogated, re-initializing belief
+        HSSimulator::genAllInitStates (3000): hidden
+         (from o1 & o2)
+        [tibi/faf-1] process has died [pid 20620, exit code -11, cmd /home/agoldhoorn/iri-lab/iri_ws/devel/lib/tibi_dabo_faf/tibi_dabo_faf ~joy:=/tibi/sensors/joy ~people:=/tibi/tag_people/tag_people ~odom:=/tibi/segway/odom /tibi/move_base:=/tibi/move_base ~observations_out:=~observations ~goals_out:=~goals ~observations_in:=/dabo/faf/observations ~goals_in:=/dabo/faf/goals __name:=faf __log:=/home/agoldhoorn/.ros/log/d86bf150-b5c9-11e4-ba45-f04da2dcc98b/tibi-faf-1.log].
+        log file: /home/agoldhoorn/.ros/log/d86bf150-b5c9-11e4-ba45-f04da2dcc98b/tibi-faf-1*.log
+        all processes on machine have died, roslaunch will exit
+
+        @ MCTS.update -> HSSimulator.genAllInitStates - hidden - (from o1&o2):
+
+    --> seems to happen when going from 'Manual' (person detection) to 'Laser', then error:
+
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        Warning: Invalid argument passed to canTransform argument source_frame in tf2 frame_ids cannot be empty
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        Warning: Invalid argument passed to canTransform argument source_frame in tf2 frame_ids cannot be empty
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        Warning: Invalid argument passed to canTransform argument source_frame in tf2 frame_ids cannot be empty
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        Warning: Invalid argument passed to canTransform argument source_frame in tf2 frame_ids cannot be empty
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        Warning: Invalid argument passed to canTransform argument source_frame in tf2 frame_ids cannot be empty
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        Warning: Invalid argument passed to canTransform argument source_frame in tf2 frame_ids cannot be empty
+                 at line 122 in /tmp/buildd/ros-indigo-tf2-0.5.7-0trusty-20141230-0040/src/buffer_core.cpp
+        shutting down processing monitor...
+
+X 6) running two hsmomdp's for automated experiments:
+        ./hsmomdp -Gf2 -Rff -ud -s localhost 1121 -u test_s1 -of run1_walker.txt -sM -Ns 0.1 -Sn 200 -C -Sp start1.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -bi "" &
+        ./hsmomdp -Gf2 -Rff -ud -s localhost 1121 -u test_s2 -of run1_walker.txt -sM -Ns 0.1 -Sn 200 -C -Sp start2.txt -A 120 -dl ../dmat/brl29a.dmat.txt -ns 2500 -ni 1000 -bz 2 -us 3 -d 1 -bf -em 25 -bi ""
+    and ONLY init done, then it is 'stuck'
+    seems like 'deadlock'
+
+    -> there were some 'asserts' (applicable for auto seeker): assert(_receiveNoisyPos), and some more
+
+X 7) error at multiseekerhbexplorer:
+        AutoPlayer::checkAndFilterPoses - chosen hider pos: <-1>[not set]
+        GameConnectorClient::readServerUpdate: get next robot poses
+        hsmomdp: ../src/Smart/multiseekerhbexplorer.cpp:60: virtual bool MultiSeekerHBExplorer::getNextRobotPoses2(Pos, IDPos, bool, Pos*, Pos*, std::vector<int>&, std::vector<Pos>&, int, int, std::vector<double>*): Assertion `hiderPos.isSet()==opponentVisible' failed.
+        MultiSeekerHBExplorer::getNextRobotPoses2: [s1:r7.85943c9.50001[r7c9],h:<-1>[not set];s2:Aborted (core dumped)
+
+        -> happened because in gameconnectorclient it was assumed that isVisib=oppPos.isSet() when noise is added,
+            but exactly in that case it can be that originally it was visible, but due added noise it got not visible
+
+X 8) running with robot in ROS
+        (see ~/faf/err*txt)
+        SeekerHS.selectMultiSeekerPose ...
+        MultiSeekerHBExplorer::selectRobotPos2 - goals: r7c9 r13c9 beliefs: 0.315333 0.415333
+        has pos for this seeker - decide which to use - belief available
+        tibi_dabo_faf: /home/tibi/iri-lab/labrobotica/algorithms/hide-and-seek/trunk/src/PathPlan/propdistplanner.cpp:197: virtual double PropDistPlanner::distance(int, int, int, int): Assertion `c1>=0 && c1<_cols && r1>=0 && r1<_rows && r2>=0 && r2<_rows && c2>=0 && c2<_cols' failed.
+        [tibi/faf-1] process has died [pid 6438, exit code -6, cmd /home/tibi/iri-lab/iri_ws/devel/lib/tibi_dabo_faf/tibi_dabo_faf ~joy:=/tibi/sensors/joy ~get_detections:=/tibi/tag_people/get_detections ~odom:=/tibi/segway/odom /tibi/move_base:=/tibi/move_base ~observations_out:=~observations ~goals_out:=~goals ~observations_in:=/dabo/faf/observations ~goals_in:=/dabo/faf/goals __name:=faf __log:=/home/tibi/.ros/log/0952d572-bb74-11e4-943c-0005b7dac026/tibi-faf-1.log].
+        log file: /home/tibi/.ros/log/0952d572-bb74-11e4-943c-0005b7dac026/tibi-faf-1*.log
+        all processes on machine have died, roslaunch will exit
+        shutting down processing monitor...
+        ... shutting down processing monitor complete
+        done
+
+        -> problem was that I accessed index 2 instead of 1 of
+            _myCalcGoalPosVec[1]; (l447, multiseekerhbexplorer.cpp)
+
+X 9) issue simulating
+
+X 10) error in sim when using seekerhs (sending beliefs if no belief)
+
+X 11) error / segm fault whe using map with no obstacles/ when no belief can be spread because overal visibiilty
+        Deduce action r3.57196c7.87683[r3c7]->r3.74967c8.33171[r3c8][d=0.488369]:e(3)
+        MultiSeekerHBExplorer::getNextRobotPoses2: [s1:r3.74967c8.33171[r3c8],h:<-1>[not set];s2:r10.5289c4.84691[r10c4],h2:[not set]] - hidden for both, pass both
+        WARNING: no consistent old belief
+        HSSimulator::genAllInitStates - WARNING: no not visible cells found, therefore random visible points are selected
+        [tibi/faf-1] process has died [pid 7073, exit code -11, cmd /home/tibi/iri-lab/iri_ws/devel/lib/tibi_dabo_faf/tibi_dabo_faf ~joy:=/tibi/sensors/joy ~get_detections:=/tibi/tag_people/get_detections ~odom:=/tibi/segway/odom /tibi/move_base:=/tibi/move_base ~observations_out:=~observations ~goals_out:=~goals ~observations_in:=/dabo/faf/observations ~goals_in:=/dabo/faf/goals __name:=faf __log:=/home/tibi/.ros/log/450c8238-bc38-11e4-b470-0005b7dac026/tibi-faf-1.log].
+        log file: /home/tibi/.ros/log/450c8238-bc38-11e4-b470-0005b7dac026/tibi-faf-1*.log
+        all processes on machine have died, roslaunch will exit
+        shutting down processing monitor...
+        --> happens because in MCTS.update no consistent belief point found
+        therefore _simulator->genAllInitStates is called
+            but because the obs of hidden from both seeker is inconsistent
+            in hssimulator.genallinitstates the wrong vector (invisPosVec instead of allStatesVec) was used to put the
+            randomly generated states in
+
+X 12) not all games stored in DB
+        -> due to too long text in meta info column (command line)
+        -> fixed by changing size of *MetaInfo columns in Game (and AddGameByName) from varchar(255) to varchar(1023)
+
+
+13) HighestBeliefFollower::initBelief[single]:
+hsmomdp: ../src/Base/autoplayer.cpp:214: virtual bool AutoPlayer::initBelief(GMap*, PlayerInfo*): Assertion `_seekerPlayer1->useObsProb == 1' failed.
+Aborted (core dumped)
+    -> solved by removing simulateNotCommunicating for init belief condition in GameConnectorClient (?)
+
+-----
+
+RUN:
+
+build/release/momdp/hsmomdp -oh -sM -Gf2 -Rff -d 1 -ns 10000 -ni 3000 -bf -u seeker1 -bi seeker1b.png -m map3_10x10 -C -bz 2
+build/release/momdp/hsmomdp -oh -sM -Gf2 -Rff -d 1 -ns 10000 -ni 3000 -bf -u seeker2 -bi seeker2b.png -m map3_10x10 -C -bz 2
+-fd 0
+-dN ?
+
+----- Qt TCP
+
+-- client:
+
+_tcpSocket = new QTcpSocket(this);
+_tcpSocket->connectToHost(QString::fromStdString(_params->serverIP), _params->serverPort);
+if(_tcpSocket->waitForConnected(10000)) {  //TODO WHY DOENST WORK???????????? ONLY CHANGED FORM 3000 to 10000 ???"·$="·/($)="·/$)=("·/$)=/"()$&"·()$&
+    /*DEBUG_CLIENT(*/ cout<<"Connected to server!"<<endl;//);
+
+    //set disconnected
+    connect(_tcpSocket, SIGNAL(disconnected()), this, SLOT(onServerDisconnect()));
+
+    //send the username of the player along with the choises of the popup window.
+    sendInfoToServer();
+
+    /*DEBUG_CLIENT(*/cout << "Waiting for server "<<endl;//);
+
+    //connect reading slot
+    connect(_tcpSocket, SIGNAL(readyRead()), this, SLOT(serverReadyRead()));
+
+    if (!_tcpSocket->isOpen())
+        cout<<"error in socket connection"<<endl;
+
+    return true;
+
+} else {
+    cout << "Error, could not connect, try again."<<endl;
+
+    return false;
+}
+
+
+-- server:
+HSTCPServer::HSTCPServer(HSServerConfig* config, HSGameLog* gameLog, QObject *parent)
+    : QTcpServer(parent), _config(config), _gameLog(gameLog), _uniformProbDistr(0,1), _gausObsNoiseDistr(0,1), _randomGenerator(_randomDevice())
+{
+    DEBUG_SERVER_VERB(cout COUT_SHOW_ID << "Starting server..."<<endl;);
+
+    _gmap = new GMap(_params);
+    _gameStatus = HSGlobalData::GAME_STATE_NOT_STARTED;
+    _numConn = 0;
+    _hiderSocket = NULL;
+    _seekerSocket = NULL;
+    _seeker2Socket = NULL;
+
+    _params = NULL;
+    _seekerBeliefScore = _seeker2BeliefScore = -1;
+    _seekerReward = _seeker2Reward = -1;
+
+    //connect to receiving new client connection
+    connect(this, SIGNAL(newConnection()), this, SLOT(handleNewConnection()));
+}
+
+
+void HSTCPServer::handleNewConnection() {
+    DEBUG_SERVER_VERB(cout COUT_SHOW_ID <<"New connection #"<<_numConn<<endl;);
+
+    QTcpSocket* connection = this->nextPendingConnection();
+    assert(connection!=NULL);
+
+.....
+}
+
+
+----- run with ROS:
+
+1. roscore
+2. rosrun rqt_gui rqt_gui (open dynamic reconfigure plugin)
+
+export ROBOT=tibi; export OTHER_ROBOT=dabo; export ROS_MODE=sim
+
+2. roslaunch tibi_dabo_faf tibi_dabo_faf.launch
+
+3. roslaunch tibi_dabo_tag_people tibi_dabo_tag_people.launch
+
+export ROBOT=dabo; export OTHER_ROBOT=tibi; export ROS_MODE=sim
+
+4. roslaunch tibi_dabo_faf tibi_dabo_faf.launch
+5. roslaunch tibi_dabo_tag_people tibi_dabo_tag_people.launch
+
+dynamic_reconfigure:
+faf: START, DEBUG OFF
+tag_people: obs_mode MANUAL, give x,y values
+
+pues en otra terminal
+6:
+export ROBOT=dabo; OTHER_ROBOT=tibi
+
+y roslaunch tibi_dabo_faf tibi_dabo_faf.launch
+y 7, lo mismo, export robot etc, y lo mismo que en 3
+
+
+
+

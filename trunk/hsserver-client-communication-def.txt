@@ -1,0 +1,391 @@
+
+
+1) All messages start with:
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION
+--------------------------------------------------------------------------------------------------
+BlockSize       BLOCK_SIZE (quint32)    Length in bytes of block, excluding this
+                    field.
+MessageType     MESSAGE_TYPE_SIZE       Type of message
+        (quint8)
+
+
+2) Start connection with server
+Client -> Server
+(GameConnectorClient.sendInfoToServer -> HSTCPServer.handleNewConnection)
+MessageType=clientRequestConn=0
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+GameType        quint8                  game type [but if server receives the
+                    value 255 it stops - depricated: now
+                    stopServer message]
+MapID           quint16                 ID of map (list can be seen through
+                    hsmomdp -A);
+-- If MapID==MAP_PASSED_BY_NETWORK=65534, then:
+[Map            GMap [I]
+]
+MapDistMatFile  QString                 File name of matrix with (precalc.)
+                    distances for the map.
+                    Note: should be path for accessible to
+                    server.
+UseContinuous   quint8                  Use continuous or not.
+WinDist         double                  Maximum distance seeker-hider where
+                    seeker 'catches' the hider.
+MinObstDist     double                  Minimum distance to obstacle.
+OppType         quint16                 Opponent type.
+-- If OppType==OPPONENT_TYPE_HIDER_ACTION_LIST(3) or
+--           ==OPPONENT_TYPE_HIDER_FILE(11) then:
+[ActionPosFile  QString                 Action or position file for opponent.
+]
+RandomPosDist   quint16                 Distance to base of the hider for a
+                    random start pos (if fixed dist. used).
+AutoWalkerType  qint16                  Type of auto walkers.
+AutoWalkerN     quint16                 Number of auto walkers.
+-- If AutoWalkerType == AUTOWALKER_FILE(4) then:
+[AutoWalkerFile QString                 file with positions for auto walkers.
+]
+SolverType      quint8                  Type of model/method for auto seeker.
+StopAtWin       bool                    Stop game if won.
+NumSteps        quint16                 Number of iterations to do.
+MyType          qint8                   Type of player: seeker/hider.               11/5/15  (changed to qint8)
+NumPlayersInCl  quint8                  Number of players in client (same type).    27/4/15
+UserName        QString                 Name of player. (If ClientCount>1, then
+                                        the name will end with a number)
+ExpName         QString                 The name unique for the experiment          14/4/16
+                                         (can be a group of runs)
+SimObsNoiseStd  double                  Standard deviation of simulated obser-
+                    vation noise.
+SimObsFalseNegP double                  Simulated false negative probability.
+SimObsFalsePosP double                  Simulated false positive probability.
+MetaInfo        QString
+Comments        QString
+NumOfPlayers    quint8                  Number of players for this game
+UsePlayerObsP   double                  Probalitiy of choosing this player's        19/05/15
+                                        obs. Indicates how trustworthy the
+                                        player's sensors are.
+CanSeeAll       bool                    The seeker can see all (i.e. through walls) 18/11/15
+SimNotVisibDist bool                    Simulate a maximum distance of visibility   16/02/16
+                                        (using default params; TODO: let params
+                                        be set, and send them)
+UseDynObstForV  bool                    use the dyn. obst. seen in the algo. to
+                                        learn/propogate belief/etc                  05/05/16
+//StartGameAH     bool                  Start game after hider has been connected   30/04/15 (DISABLED)
+
+
+
+3) Send params. to players
+Server -> Clients
+(HSTCPServer.sendParamsToPlayers -> GameConnectorClient.readInitInfoFromServer)
+MessageType=gameParams=1
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+GameType        quint8
+UseContinuous   quint8
+PlayerType      quint8                  Seeker/hider
+MaxNumActions   quint16                 Maximum number of actinos.
+WinDist         double
+MinDistToObst   double
+MapID           quint16
+Map             GMap [I]
+Player2Name     QString
+Player3Name     QString                 (when playing with 2 seekers, otherwise
+                                        empty)
+SimObsNoiseStd  double
+SimObsFalseNegP double
+SimObsFalsePosP double
+SendNoisePos    bool                    Send noisy positions or not.
+
+
+From 30/4/15:
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+GameType        quint8
+UseContinuous   quint8
+ExpName         QString                 Name of the experiment(s)                   14/04/16
+MaxNumActions   quint16                 Maximum number of actinos.
+WinDist         double
+MinDistToObst   double
+MapID           quint16
+Map             GMap [I]
+MapDistMatFile  QString                 File name of matrix with (precalc.)	        16/05/16
+SimObsNoiseStd  double
+SimObsFalseNegP double
+SimObsFalsePosP double
+SimNotVisibDist bool                                                                16/02/16
+UseDynObstForV  bool                    use the dyn. obst. seen in the algo. to
+                                        learn/propogate belief/etc                  05/05/16
+NumOfOPlayers   quint8                  Number of total players
+NumPlayersInCl  quint8                  Numb. players in client
+-- for all players in client
+[id             quint8                  ID of receiver
+Type            qint8                   Type of receive player: Seeker/hider
+Rec. name       QString                 name of receiver
+UsePlayerObsP   double                  Probalitiy of choosing this player's        19/05/15
+]
+-- for other players (NumOfOPlayers-NumPlayersInCl):
+[id             quint8
+Type            qint8                   Type: seeker/hider
+Name            QString
+UsePlayerObsP   double                  Probalitiy of choosing this player's        19/05/15
+]
+
+
+
+
+4) Read init positions
+(Clients -> Server)
+
+MessageType=initPos=2
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Pos             Pos [II]
+
+From 30/4/15:
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+numPlayers      quint8
+--for each player:
+[id             quint8
+Pos             Pos [II]
+]
+
+
+5) Send update to players
+(Server -> Clients)
+
+MessageType=update=3
+
+The player 2 should be the hider (if it is not send to hider, when it is seeker),
+player 3 is the other seeker (if the game contains 2 seekers).
+The bool SendPostionWith should be false for the hider.
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Validation      quint16                 Validation, but not used, always 1
+GameStatus      quint16                 Status of game (running/won/lost).
+Player2Pos      Pos [II]                Position of player 2.
+-- if (SendPostionWith noise):
+[HiderWNoise    Pos [II]                Position of hider with noise.
+]
+-- if (use 2 seekers):
+[Player3Pos     Pos [II]                Player 3 pos.
+-- if (SendPostionWith noise):
+[
+HiderWNoise2    Pos [II]                Pos of hider with noise as seen by
+                                        other seeker.
+]
+NumbAutoWalker  quint16                 Number of auto walkers
+-- for each auto walker:
+[Pos            IDPos [III]             Pos of autowalker
+]
+
+From 30/4/15:
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Validation      quint16                 Validation, but not used, always 1
+GameStatus      quint16                 Status of game (running/won/lost).
+numPlayers      quint8
+-- for each player:
+[id             quint8                  ID of player (in game, not object)
+Pos             Pos [II]                Position of player id.
+PosWNoise       Pos [II]                Position of player id w noise.
+]
+numPlayersS     quint8                  Number of players to send hider
+                                        noisy pos to (ie seekers)
+-- should be to ALL seekers: {was: if client.numPlayers(seeker)>1, for each not hider Player:}
+    (numPlayersS indicates amount of items sent)
+[id             quint8                  id of seeker
+PosWNoise       Pos [II]                Obs Pos of hiderer w noise for
+                                        seeker id
+trustProb       double                  Prob. of trusting this observation,         11/06/15
+                                        should have been normalized by server,
+                                        i.e. sum over all players should be 1.
+                                        (For sim. first use HSSeekerParams::
+                                        multiSeekerOwnObsChooseProb)
+numAutoWVisib   quint16                 number of autowalkers visible for seeker    03/05/16
+-- for each autow.:
+[Pos            IDPos [III]             position of visible auto player (with noise)03/05/16
+]
+]
+NumbAutoWalker  quint16                 Number of auto walkers
+-- for each auto walker:
+[Pos            IDPos [III]             Pos of autowalker
+]
+
+
+6) Read new action
+(Clients -> Server)
+MessageType=action=4
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Action          quint16                 Action
+Position        Pos [II]
+BeliefScore     double                  Score of belief.
+Reward          double                  Reward by client's model.
+
+From 30/4/15:
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+numPlayers      quint8                  Number of players.
+-- for each player in the player
+[id             quint8                  id of player
+Action          quint16                 Action
+Position        Pos [II]                The new position
+BeliefScore     double                  Score of belief.
+Reward          double                  Reward by client's model.
+ChosenPos       Pos [II]                Chosen goal pos.                            17/7/15: always send
+]
+
+
+7) Send message
+
+7.1) (Client -> Server)
+MessageType=message=98
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+To              quint8                  Send message to: all=0,..
+Message         ?                       Free
+
+
+7.2) Server -> Client(s)
+MessageType=message=98
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+To              quint8                  Send message to: all=0,..
+From            quint8                  Id from user (hider/seeker1/seeker2)
+Message         ?                       Free
+
+
+8) Send robot goals
+MessageType=SeekerGoals=5
+Client->Server: anounce its goals + beliefs
+Server->Clients: anounce other's goals+beliefs
+
+The number of goals should be 1 or 2. The first goal is of the robot from
+who it is sent OR to who it is sent, EXCEPT when only 1 goal is sent, then
+for messages Server->Client this will be the other client's goal.
+The belief has the same order, but can contain 0 items.
+
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+NumGoals        quint8                  Number of goals to be sent.
+Goal1           Pos [II]                Goal position of client.
+[Goal2          Pos [II]                Goal of other client
+]
+NumBeliefs      quint8                  Number of belief items for goal
+                                        (should be NumGoals or 0).
+[belief1        double
+[belief2        double
+]
+]
+
+From 30/4/15:
+For the client->server each client sends for each of its own player the goals for all other players.
+The server sends per players the goals given by that player for each player, this will be thus a
+list of n x n positions + beliefs with n agents.
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+NumPlayers      quint8                  Number of players.
+-- for each player:
+[id             quint8                  id of player.
+NumGoals        quint8                  Number of goals to be sent.
+-- for each goal:
+[id-goal-player quint8                  Player id for the goal
+Goal            BPos [IV]               Goal for player id and belief (-1 if not set)
+]
+]
+
+
+
+9) Send highest belief points
+MessageType=SeekerHB=6
+Client->Server: anounce its highest belief points + beliefs
+Server->Clients: anounce other's highest belief points + beliefs
+
+From 8/5/15:
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+NumPlayers      quint8                  Number of players.
+-- for each player:
+[id             quint8                  id of player.
+NumHB           quint8                  Number of highest beliefs.
+-- for each HB:
+[HB Pos         Pos [II]                Highest belief position.
+HB belief       double                  Belief of HB.
+]
+]
+
+
+10) Stop Server/Server stopped
+MessageType=stopServer=99
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Reason          QString                 (Optional) reason of stop
+
+
+===== Data types ======
+
+I) GMap
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Name            QString
+Rows            quint16                 Number of rows.
+Cols            quint16                 Number of cols.
+Obst            quint32                 Number of obstacles.
+-- x Obst:  (obst. times)
+[row            quint16                 Row of obstacle.
+ col            quint16                 Col of obstacle.
+]
+BaseRow         quint16                 Base row.
+BaseCol         quint16                 Base col.
+CellSize_m      double                  Cell size in meters                         03/05/16
+
+
+II) Pos
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+row             int/double*
+col             int/double*
+
+*double if UseContinuous is true
+
+
+III) IDPos
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Pos             Pos [II]
+id              quint16                 ID of autowalker/hider/..
+
+
+IV) BPos
+Pos with belief, added 11/7/15
+--------------------------------------------------------------------------------------------------
+NAME            TYPE                    DESCRIPTION                                 FROM VER.
+--------------------------------------------------------------------------------------------------
+Pos             Pos [II]
+belief          double                  belief of double
+

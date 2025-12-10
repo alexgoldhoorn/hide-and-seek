@@ -1,0 +1,26 @@
+9,10,
+000000000
+000000000
+001000000
+001000000
+001000000
+000000000
+000011100
+000000000
+020000000
+000000000
+------
+map of 9x10 cells
+for total surface 10.37m x 12.06m
+each cell 1.19m
+errors: x: -0.34m; y: 0.16m
+length obstacle: 3*1.19=3.57
+
+obstacle size: 1.19 x 3.57 m
+obstacle locations:
+i)  top-left:  (2.38, 3.57)
+ii) top-left:  (4.76, 7.14)
+ right-bottom: (2.38, 3.57)
+base:
+    top-left:  (1.19, 9.52)
+ left-bottom:  (1.19, 1.19)

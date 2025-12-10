@@ -1,0 +1,12 @@
+ParticlesBelief.o: ../../src/ParticlesBelief.cc \
+ ../../src/ParticlesBelief.h ../../src/Belief.h ../../src/State.h \
+ ../../src/Particle.h ../../src/Utils.h ../../src/Action.h \
+ ../../src/Model.h ../../src/ActNode.h ../../src/Obs.h \
+ ../../src/ObsEdge.h ../../src/PolicyGraph.h ../../src/BeliefNode.h \
+ ../../src/RandSource.h
+../../src/ParticlesBelief.cc :
+ ../../src/ParticlesBelief.h ../../src/Belief.h ../../src/State.h :
+ ../../src/Particle.h ../../src/Utils.h ../../src/Action.h :
+ ../../src/Model.h ../../src/ActNode.h ../../src/Obs.h :
+ ../../src/ObsEdge.h ../../src/PolicyGraph.h ../../src/BeliefNode.h :
+ ../../src/RandSource.h :

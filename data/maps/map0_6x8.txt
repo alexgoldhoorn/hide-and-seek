@@ -1,0 +1,17 @@
+6,8,
+000000
+000000
+000000
+000000
+000000
+000000
+000200
+000000
+------
+map of 8x6 cells
+for total surface 7.0m x 5.3m
+each cell 0.878m
+errors: x: -0.02m; y: 0.03m
+base:
+ left-bottom:  (3.512m,1.756m)
+ right-bottom: (2.634m,1.756m)

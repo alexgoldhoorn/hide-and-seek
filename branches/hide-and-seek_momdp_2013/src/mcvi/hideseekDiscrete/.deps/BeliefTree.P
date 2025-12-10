@@ -1,0 +1,12 @@
+BeliefTree.o: ../../src/BeliefTree.cc ../../src/BeliefTree.h \
+ ../../src/Action.h ../../src/Model.h ../../src/State.h ../../src/Utils.h \
+ ../../src/ActNode.h ../../src/Obs.h ../../src/ObsEdge.h \
+ ../../src/Particle.h ../../src/PolicyGraph.h ../../src/Belief.h \
+ ../../src/BeliefNode.h ../../src/BeliefSet.h ../../src/RandSource.h \
+ ../../src/Bounds.h
+../../src/BeliefTree.cc ../../src/BeliefTree.h :
+ ../../src/Action.h ../../src/Model.h ../../src/State.h ../../src/Utils.h :
+ ../../src/ActNode.h ../../src/Obs.h ../../src/ObsEdge.h :
+ ../../src/Particle.h ../../src/PolicyGraph.h ../../src/Belief.h :
+ ../../src/BeliefNode.h ../../src/BeliefSet.h ../../src/RandSource.h :
+ ../../src/Bounds.h :

@@ -1,0 +1,31 @@
+
+
+VERSIONS
+
+WORKING for March 2015 and done experiments with 2 robots (real + sim):
+
+Working Copy Root Path: /home/agoldhoorn/iri-lab/labrobotica
+URL: https://devel.iri.upc.edu/labrobotica/algorithms/hide-and-seek/trunk
+Relative URL: ^/algorithms/hide-and-seek/trunk
+Repository Root: https://devel.iri.upc.edu/labrobotica
+Repository UUID: 224674b8-e365-4e73-a4a8-558dbbfec58c
+Revision: 13825
+Node Kind: directory
+Schedule: normal
+Last Changed Author: fherrero
+Last Changed Rev: 13686
+Last Changed Date: 2015-04-08 11:19:29 +0200 (mié, 08 abr 2015)
+
+agoldhoorn@starfleet:~/iri-lab/labrobotica/algorithms/hide-and-seek/trunk$ cd src
+agoldhoorn@starfleet:~/iri-lab/labrobotica/algorithms/hide-and-seek/trunk/src$ svn info
+Path: .
+Working Copy Root Path: /home/agoldhoorn/iri-lab/labrobotica
+URL: https://devel.iri.upc.edu/labrobotica/algorithms/hide-and-seek/trunk/src
+Relative URL: ^/algorithms/hide-and-seek/trunk/src
+Repository Root: https://devel.iri.upc.edu/labrobotica
+Repository UUID: 224674b8-e365-4e73-a4a8-558dbbfec58c
+Revision: 13825
+Node Kind: directory
+Schedule: normal
+Last Changed Author: agoldhoorn
+

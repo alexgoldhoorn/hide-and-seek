@@ -1,0 +1,10 @@
+Bounds.o: ../../src/Bounds.cc ../../src/Bounds.h ../../src/Utils.h \
+ ../../src/Action.h ../../src/Model.h ../../src/State.h \
+ ../../src/ActNode.h ../../src/Obs.h ../../src/ObsEdge.h \
+ ../../src/Particle.h ../../src/PolicyGraph.h ../../src/Belief.h \
+ ../../src/BeliefNode.h ../../src/RandSource.h
+../../src/Bounds.cc ../../src/Bounds.h ../../src/Utils.h :
+ ../../src/Action.h ../../src/Model.h ../../src/State.h :
+ ../../src/ActNode.h ../../src/Obs.h ../../src/ObsEdge.h :
+ ../../src/Particle.h ../../src/PolicyGraph.h ../../src/Belief.h :
+ ../../src/BeliefNode.h ../../src/RandSource.h :

@@ -1,0 +1,102 @@
+
+
+ ./hsmomdp -u testS -hsb 0.25 -rps -scc -C -oh -Rc -En -ni 200 -ns 10000 -csns 0.05 -csnh 0.05 -csos 0.1 -csoh 0.1 
+-as bcn_lab/fme2014_map1.txt -w 1.5
+
+
+-scc -C -tS -hsb 0.1 -m map3_6x5 -oh -u testS -rpr -Ib 0 -Rt -dc -ns 10000 -ni 10 -s localhost 1121 
+ -ssan -sshn
+
+
+#include "hsglobaldata.h"
+#include "Smart/smartseeker.h"
+
+
+getNextPoseForMultipleObs
+SOLVER_POMCP_CONT (6)
+
+SOLVER_SMART_SEEKER (9)
+
+
+
+
+
+//AG130613: game time
+//! max game time, after which ends in a tie (0=endless)
+//could be dynamic param
+params->maxGameTime = 50;
+
+//! win distance (to hider, default 0 i.e. on same place), the distance in grid cell units
+//in theory could be <1, no
+params->winDist = 1;
+//! grid cell width (m) in the real world
+params->cellSizeM = 1.0;
+
+
+
+
+//parameters for seeker
+params->mapFile     = mapFile;
+params->expName     = this->experiment;
+params->solverType  = this->solver; //use SeekerHSParams::SOLVER_*
+//in case of pomdp
+//params->pomdpFile   = pomdpFile;
+//for offline pomdp
+//params->policyFile  = policyFile;
+//log files
+params->logFile     = logFile;
+params->timeLogFile = timeLogFile;
+params->gameLogFile = gameLogFile;
+//online pomdp params
+/*params->segmenterType = SeekerHSParams::SEGMENTER_ROBOT_CENTERED;
+params->rcSegmDist    = 10;
+params->rcAngDist     = 45;
+params->rcBaseRad     = 0;
+params->rcHighResR    = 0;
+//on-line params, set top reward and final state
+params->setFinalStateOnTop = true;
+params->setFinalTopRewards = true;
+
+//to make faster (but worse results)
+params->ubInitType = SeekerHSParams::UPPERBOUND_INIT_MDP;
+params->timeoutSeconds = 10;*/
+
+params->numBeliefStates = 20; //depending map size
+params->numSim = 20000;
+//params->explorationConst; //use default
+//params->int expandCount; //use default
+params->simHiderType = SeekerHSParams::SIM_HIDER_TYPE_TOBASE; //SIM_HIDER_TYPE_RANDOM
+params->simHiderRandomActProb = 0.25;
+//params->bool setInitNodeValue;
+//params->expectedRewardCalc; //default
+//bool useWeightedBeliefs; //default
+params->rolloutPolicyType = SeekerHSParams::ROLL_OUT_POLICY_TYPE_RANDOM; //or ROLL_OUT_POLICY_TYPE_SMART
+//parameters for continuous movements
+// calc stdev based on cell-width (0.5, 1 side), and percentage within the cell 
+// 0.5/-stdnormal_inv(.05)
+// std.dev.=0.25 implies 95.4% inside the cell!
+//! std. dev. next state seeker
+params->contNextSeekerStateStdDev = 0.25; 
+//! std. dev. next state hider
+params->contNextHiderStateStdDev = 0.25;
+//! std. dev. observation seeker
+params->contSeekerObsStdDev = 0.25;
+//! std. dev. observation hider
+params->contHiderObsStdDev = 0.25;
+
+params->allowInconsistObs = true;
+
+params->smartSeekerScoreHiddenType = SmartSeeker::SCORE_MIN;
+params->smartSeekerScoreActionType = SmartSeeker::SCORE_MIN;
+//! Smart seeker max number of positions for which the score has to be calculated when
+//! it the hider is hidden (0=all)
+params->smartSeekerMaxCalcsWhenHidden = 0;
+
+params->initPosType = HSGlobalData::INIT_POS_TYPE_BASE;
+//params->randomPosDistToBase;
+//params->randomPosDistToBaseHider;
+
+params->useContinuousPos = true;
+
+
+

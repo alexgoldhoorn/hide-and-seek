@@ -1,0 +1,6 @@
+name		(pixels:)	start_x	end_x	start_y	end_y	1 pixel (m)
+upcnort2014_map1a.txt		142	343	408	448	0.2
+upcnort2014_map1b.txt		142	343	408	448	0.1
+upcnort2014_map2a.txt		163	320	414	446	0.2
+upcnort2014_map2b.txt		163	320	414	446	0.1
+

@@ -1,0 +1,14 @@
+Solver.o: ../../src/Solver.cc ../../src/Solver.h ../../src/State.h \
+ ../../src/Obs.h ../../src/ObsEdge.h ../../src/Particle.h \
+ ../../src/PolicyGraph.h ../../src/Action.h ../../src/Model.h \
+ ../../src/Utils.h ../../src/Belief.h ../../src/BeliefNode.h \
+ ../../src/BeliefSet.h ../../src/BeliefTree.h ../../src/Bounds.h \
+ ../../src/RandSource.h ../../src/Simulator.h ../../src/ParticlesBelief.h \
+ ../../src/ParticlesBeliefSet.h
+../../src/Solver.cc ../../src/Solver.h ../../src/State.h :
+ ../../src/Obs.h ../../src/ObsEdge.h ../../src/Particle.h :
+ ../../src/PolicyGraph.h ../../src/Action.h ../../src/Model.h :
+ ../../src/Utils.h ../../src/Belief.h ../../src/BeliefNode.h :
+ ../../src/BeliefSet.h ../../src/BeliefTree.h ../../src/Bounds.h :
+ ../../src/RandSource.h ../../src/Simulator.h ../../src/ParticlesBelief.h :
+ ../../src/ParticlesBeliefSet.h :

@@ -1,0 +1,4 @@
+Action.o: ../../src/Action.cc ../../src/Action.h ../../src/Model.h \
+ ../../src/State.h ../../src/Utils.h
+../../src/Action.cc ../../src/Action.h ../../src/Model.h :
+ ../../src/State.h ../../src/Utils.h :

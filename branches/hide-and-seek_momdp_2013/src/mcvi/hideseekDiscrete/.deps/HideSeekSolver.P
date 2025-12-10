@@ -1,0 +1,8 @@
+HideSeekSolver.o: HideSeekSolver.cc HideSeekModel.h ../../src/Model.h \
+ ../../src/State.h ../../src/Utils.h ../../src/Action.h ../../src/Model.h \
+ ../../src/Solver.h ../../src/ParticlesBeliefSet.h ../../src/BeliefSet.h \
+ ../../src/Belief.h ../../src/Particle.h
+HideSeekSolver.cc HideSeekModel.h ../../src/Model.h :
+ ../../src/State.h ../../src/Utils.h ../../src/Action.h ../../src/Model.h :
+ ../../src/Solver.h ../../src/ParticlesBeliefSet.h ../../src/BeliefSet.h :
+ ../../src/Belief.h ../../src/Particle.h :

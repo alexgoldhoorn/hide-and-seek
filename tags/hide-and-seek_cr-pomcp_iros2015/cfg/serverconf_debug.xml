@@ -1,0 +1,31 @@
+<Settings name="hsserver">
+
+<ip>localhost</ip>
+<port>1120</port>
+<max-actions type="r*c"/> <!-- 2r+c|r*c|fixed  
+			  2r+c = type1 = 2*(#rows+#cols)
+			  r*c  = type2 = (#rows*#cols)
+			  fixed  = fixed, requires a value -->
+
+<win-if-crossed>true</win-if-crossed> 
+	<!-- seeker wins if crossing (i.e. hider and seeker switch places), default is true -->
+
+<path>
+	<maps>/home/agoldhoorn/iri-lab/labrobotica/algorithms/hide-and-seek/data/maps/</maps>
+	<logs>/home/agoldhoorn/iri-lab/labrobotica/algorithms/hide-and-seek/data/logs/</logs> <!-- log dir used when chosen -->
+	<actions>/home/agoldhoorn/iri-lab/labrobotica/algorithms/hide-and-seek/data/temp</actions> <!-- /home/agoldhoorn/MyProjects/Experiments/actions-recorded/ -->
+</path>
+<progs>
+	<server>build/build/release/server/hsserver</server>
+	<autohider>build/build/release/autohider/hsautohider</autohider>
+</progs>
+
+<logdb>
+	<server>localhost</server>
+	<database>hsgamelog</database>
+	<user>hsserver</user>
+	<pass>hsserver_us3r_p@ss</pass>
+</logdb>
+<log-method>db</log-method> <!-- db|file -->
+
+</Settings>

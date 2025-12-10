@@ -1,0 +1,61 @@
+#!/bin/sh
+
+x=1
+while [ $x -le 100 ]
+do
+  if [ ! -f "EXP.RUN" ];
+  then
+	echo "STOP (file 'EXP.RUN' is not present)"
+	break
+  fi
+
+
+  echo "Run $x"
+
+m=1
+while [ $m -le 4 ]
+do
+map="map${m}_40x40.pomdpx"
+
+# random
+./hsmomdp -ss -m $map -u SmartSeeker -s 192.168.100.220 1123 -oh > smartseeker_i$x_map$m_randh.log &
+sleep 10
+./hsautohider 192.168.100.220 1123 1  > hider_i$x_map$m_randh.log 
+
+sleep 10
+
+# smart
+./hsmomdp -ss -m $map -u SmartSeeker -s 192.168.100.220 1123 -oh > smartseeker_i$x_map$m_smarth.log &
+sleep 10
+./hsautohider 192.168.100.220 1123 2  > hider_i$x_map$m_smarth.log 
+
+sleep 10
+
+# very smart
+./hsmomdp -ss -m $map -u SmartSeeker -s 192.168.100.220 1123 -oh > smartseeker_i$x_map$m_verysmarth.log &
+sleep 10
+./hsautohider 192.168.100.220 1123 5  > hider_i$x_map$m_verysmarth.log 
+
+sleep 10
+
+# all know. smart
+./hsmomdp -ss -m $map -u SmartSeeker -s 192.168.100.220 1123 -oh > smartseeker_i$x_map$m_allksmarth.log &
+sleep 10
+./hsautohider 192.168.100.220 1123 6  > hider_i$x_map$m_allksmarth.log 
+
+sleep 10
+
+  m=$(( $m + 1 ))
+
+done
+
+
+
+
+  x=$(( $x + 1 ))
+
+tar czf logs_130509_smsk.tgz *log
+
+sleep 10
+
+done

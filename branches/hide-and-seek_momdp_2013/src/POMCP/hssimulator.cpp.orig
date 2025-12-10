@@ -1,0 +1,411 @@
+#include "hssimulator.h"
+#include "hsstate.h"
+
+#include "hsglobaldata.h"
+#include "seekerhs.h"
+
+#include "Utils/generic.h"
+#include "Utils/timer.h"
+
+//iriutils
+#include "exceptions.h"
+
+#include <cassert>
+#include <vector>
+
+
+using namespace pomcp;
+using namespace std;
+
+
+inline bool HSSimulator::hiderWin(HSState* hsstate) {
+    return _basePos.equals(hsstate->hiderPos);
+}
+
+inline bool HSSimulator::seekerWin(HSState* hsstate) {
+    return (_map->distance(hsstate->hiderPos,hsstate->seekerPos)<=_params->winDist);
+}
+
+inline bool HSSimulator::tie(HSState* hsstate) {
+    return (_params->maxGameTime>0 && _timer>=_params->maxGameTime);
+}
+
+
+HSSimulator::HSSimulator(GMap *map, SeekerHSParams* params) {
+    assert(map!=NULL);
+    _map = map;
+
+    if (params->rewardType==SeekerHSParams::REWARD_NOT_SET) {
+        throw CException(_HERE_,"reward type has not been set");
+    }
+
+    //max value for triangle reward
+    _maxRewValue = map->colCount() * map->rowCount();
+    //hidden obs (since observations are id-ed by state, the one after last is 'unknown' obs - consistent with POMDP impl)
+    _hiddenObs = map->numFreeCells();
+    _basePos = map->getBase();
+    _params = params;
+
+    /*_hiderPlayer.setMap(map);
+    _seekerPlayer.setMap(map);*/
+    _player.setMap(map);
+
+    //number of free cells + 1 (unknown)
+    _numObs = map->numFreeCells() + 1;
+}
+
+unsigned int HSSimulator::getNumActions() {
+    return HSGlobalData::NUM_ACTIONS;
+}
+
+unsigned int HSSimulator::getNumObservations() {
+    return _numObs;
+}
+
+State* HSSimulator::genRandomState(State *prevState, History *history) {
+    assert(prevState!=NULL);
+    HSState* hsstate = static_cast<HSState*>(prevState);
+    HSState* nextHsstate = new HSState();
+
+    //getnext seeker pos
+    vector<Pos> posVec;
+    getPossibleNextPos(hsstate->seekerPos, posVec);
+    //set random next seeker pos
+    nextHsstate->seekerPos.set(posVec[random(posVec.size())]);
+
+    //next hider pos
+    posVec.clear();
+    getPossibleNextPos(hsstate->hiderPos, posVec);
+    //random hider pos
+    nextHsstate->hiderPos.set(posVec[random(posVec.size())]);
+
+    return nextHsstate;
+}
+
+State* HSSimulator::genInitState() {
+    if (!_seekerPos.isSet()) {
+        throw CException(_HERE_,"the seeker position should be known when given a random init state");
+    }
+
+    HSState* state = new HSState();
+
+    //seeker pos
+    state->seekerPos.set(_seekerPos);
+
+    //hider pos
+    if (_hiderPos.isSet()) {
+        //known set it
+        state->hiderPos.set(_hiderPos);
+    } else {
+        //get random non-visible pos
+        vector<Pos> invisPosVec = _map->getInvisiblePoints(state->seekerPos);
+        //get random hiderpos
+        state->hiderPos.set(invisPosVec[random(invisPosVec.size())]);
+    }
+
+    return state;
+}
+
+void HSSimulator::getActions(State* state, History* history, std::vector<int>& actions, bool smart=true) {
+    assert(state!=NULL);
+    HSState* hsstate = static_cast<HSState*>(state);
+
+    //clear actions (?)
+    //actions.clear();
+
+    //try actions
+    FORs(a,HSGlobalData::NUM_ACTIONS) {
+        //try action
+        Pos newPos = _player.tryMove(a, hsstate->seekerPos);
+        //if possible add to list
+        if (newPos.row != -1) {
+            actions.push_back(a);            
+        }
+    }
+}
+
+void HSSimulator::getPossibleNextPos(Pos &prevPos, vector<Pos>& posVec) {
+    FORs(a,HSGlobalData::NUM_ACTIONS) {
+        //try action
+        Pos newPos = _player.tryMove(a, prevPos);
+        //if possible add to list
+        if (newPos.isSet()) {
+            posVec.push_back(newPos);
+        }
+    }
+}
+
+void HSSimulator::setInitialNodeValue(State* state, History* history, BaseNode* node, int action=-1) {
+    double r = 0;
+    if (action==-1) {
+        r = getImmediateReward(state);
+    } else {
+        int o;
+        State* nextState = step(state, action, o, r);
+        delete nextState;
+    }
+
+    node->setCountAndValue(1,r); //?? IS THIS OK??? -> not done iby expandNode of silver!!!
+}
+
+State* HSSimulator::step(State *state, int action, int &obs, double &reward) {
+    assert(state!=NULL);
+    assert(action>=0 && action<HSGlobalData::NUM_ACTIONS);
+
+    HSState* hsstate = static_cast<HSState*>(state);
+
+    //do move of seeker
+    Pos newSeekerPos = _player.tryMove(action, hsstate->seekerPos);
+    if (!newSeekerPos.isSet()) {
+        //not possible, so same position
+        newSeekerPos.set(hsstate->seekerPos);
+    }
+
+    //move hider
+    vector<Pos> posVec;
+    //get next hider positions possible
+    getPossibleNextPos(hsstate->hiderPos, posVec);
+    assert(posVec.size()>0);
+    //choose random next hider pos
+    Pos newHiderPos = posVec[random(posVec.size())];
+
+    //now decide observation
+    if (_map->isVisible(newHiderPos,newSeekerPos)) {
+        obs = _map->getIndexFromCoord(newHiderPos);
+    } else {
+        obs = _hiddenObs;
+    }
+
+    //reward
+    HSState* nexthsState = new HSState(newSeekerPos,newHiderPos);
+    reward = getImmediateReward(state, nexthsState);
+
+    return nexthsState;
+}
+
+bool HSSimulator::isFinal(State *state) {
+    //check win state       //TODO: could be cached
+    HSState* hsstate = static_cast<HSState*>(state);
+    /*bool hiderWin = _map->getBase().equals(hsstate->hiderPos);
+    bool seekerWin = (_map->distance(hsstate->hiderPos,hsstate->seekerPos)<=_params.winDist);
+    bool tie = (_params.maxGameTime>0 && _timer>=_params.maxGameTime);
+
+    return hiderWin || seekerWin || tie;*/
+    return hiderWin(hsstate) || seekerWin(hsstate) || tie(hsstate);
+}
+
+void HSSimulator::resetTimer(unsigned int t) {
+    _timer = t;
+}
+
+void HSSimulator::increaseTimer() {
+    _timer++;
+}
+
+void HSSimulator::setSeekerHiderPos(Pos seekerPos, Pos hiderPos, bool opponentVisible) {
+    _seekerPos.set(seekerPos);
+    //_seekerPlayer.setOpPos(hiderPos);
+    if (opponentVisible) {
+        _hiderPos.set(hiderPos);
+    } else {
+        _hiderPos.clear();
+    }
+    //_hiderPlayer.setOpPos(hiderPos);
+}
+
+double HSSimulator::getImmediateReward(State *state, State* nextState) {
+    assert(state!=NULL);
+
+    //get states
+    HSState* hsstate = static_cast<HSState*>(state);
+    HSState* hsnextstate = NULL;
+    if (nextState!=NULL) {
+        hsnextstate = static_cast<HSState*>(nextState);
+    }
+
+    double r = 0;
+
+    //calculate the reward
+    switch(_params->rewardType) {
+    case SeekerHSParams::REWARD_FINAL_CROSS:
+        // if next pos seeker =
+        if (hsnextstate!=NULL &&
+                hsstate->seekerPos.equals(hsnextstate->hiderPos) &&
+                hsstate->hiderPos.equals(hsnextstate->seekerPos)) {
+            r = 1;
+            break;
+        } //else try if we are in a winning state:
+    case SeekerHSParams::REWARD_FINAL:      //TODO: check. should we use nextState (?)
+        if (hsnextstate!=NULL) hsstate = hsnextstate;
+        if (hiderWin(hsstate)) {
+            r = -1;
+        } else if (seekerWin(hsstate)) {
+            r = 1;
+        }
+        break;
+    case SeekerHSParams::REWARD_TRIANGLE: {
+        if (hsnextstate!=NULL) hsstate = hsnextstate;
+        //distances
+        float dsh = _map->distance(hsstate->hiderPos, hsstate->seekerPos);
+        float dhb = _map->distance(hsstate->hiderPos, _basePos);
+        float dsb = _map->distance(hsstate->seekerPos, _basePos);
+
+        if (dhb>=dsb) {
+            r = _maxRewValue - dsh;
+        } else {
+            r = -dsh;
+        }
+        break;
+    }
+    default:
+        throw CException(_HERE_,"unkown reward type");
+    }
+
+    return r;
+}
+
+
+void HSSimulator::setMaxRewardValue(unsigned int maxRew) {
+    _maxRewValue = maxRew;
+}
+
+
+void HSSimulator::testAllFunctions() {
+
+    cout << "Showing map: " << mapFile << endl;
+    cout << "Size: "<<_map->rowCount()<<"x"<<_map->colCount()<<endl;
+    _map->printMap();
+
+    //Player player(&gmap);
+
+
+    Timer t;
+    int sTime = t.startTimer();
+    long c=0;
+
+        for(x.row=0;x.row<_map->rowCount();x.row++) {
+            for(x.col=0;x.col<_map->colCount();x.col++) {
+                if (!_map->isObstacle(x)) { int tid=t.startTimer();
+                    for(y.row=0;y.row<_map->rowCount();y.row++) {
+                        for(y.col=0;y.col<_map->colCount();y.col++) {
+                            if (!_map->isObstacle(y)) {
+                                cout << "*** x/seeker: "<<x.toString()<<" - y/hider: "<<y.toString()<<" ***"<<endl;
+
+
+
+        cout << " distance: " << _map->distance(x.row,x.col,y.row,y.col)<<endl;
+
+        player.setcurpos(x.row,x.col);
+
+        //player.calculatevisible(); //AG130228: disable
+
+        _map->printMap(x.row,x.col);
+
+        //cout << "Old isVisible: "<< _map->isVisible(y.x,y.y)<<endl;
+        cout << "New isVisible: "<< _map->isVisible(x.row,x.col,y.row,y.col)<<endl;
+
+        cout << "Invisible from pos 1:"<<endl;
+        vector<Pos> invisPosVec = _map->getInvisiblePoints(x.row,x.col);
+        FOR(i,invisPosVec.size()) {
+            cout << " "<<i<<"] r" << invisPosVec[i].row << "c"<<invisPosVec[i].col<<endl;
+        }
+        cout <<endl;
+
+        if (sim!=NULL) {
+
+            cout << " -- genInitState --"<<endl;
+            bool v = _map->isVisible(x,y);
+            cout << "visiblity: (s->h): "<<v<<endl;
+            cout<<"10 init states: ";
+            setSeekerHiderPos(x,y,v);
+            FOR(i,10) {
+                pomcp::State* s = genInitState();
+                cout << s->toString()<<" ";
+                delete s;
+            }
+            cout << endl;
+
+
+            cout << " -- genRandomState --"<<endl;
+            pomcp::HSState hsstate(x,y);
+            cout<<"10 next random states from "<< hsstate.toString() <<": ";
+            //setSeekerHiderPos(x,y,v);
+            FOR(i,10) {
+                pomcp::State* s = genRandomState(&hsstate,NULL);
+                cout << s->toString()<<" ";
+                delete s;
+            }
+            cout << endl;
+
+
+            cout << " -- getActions --"<<endl;
+            cout<<"possible actions from "<< hsstate.toString() <<": ";
+            vector<int> actVec;
+            getActions(&hsstate,NULL,actVec);
+            FOREACH(int,a,actVec) {
+                cout << *a<<" ";
+            }
+            cout << endl;
+
+
+            cout << " -- getPossibleNextPos --"<<endl;
+            cout<<"possible pos from "<< x.toString() <<": ";
+            vector<Pos> posVec;
+            getPossibleNextPos(x,posVec);
+            FOREACH(Pos,p,posVec) {
+                cout << p->toString()<<" ";
+            }
+            cout << endl;
+
+
+            cout << " -- setInitialNodeValue --"<<endl;
+            cout<<"set init node value from "<< hsstate.toString() <<": "<<flush;
+            pomcp::Node node(sim,NULL);
+            for(int a=-1;a<HSGlobalData::NUM_ACTIONS;a++) {
+                setInitialNodeValue(&hsstate,NULL,&node,a);   //(x,posVec);
+                cout << " a="<<a<<" count="<<node.getCount()<<" v="<<node.getValue()<<"; ";
+            }
+            cout << endl;
+
+
+            cout << " -- step --"<<endl;
+            cout<<"step from "<< hsstate.toString() <<": ";
+            for(int a=0;a<HSGlobalData::NUM_ACTIONS;a++) {
+                double r=0;
+                int o=-1;
+                pomcp::State* nextS = step(&hsstate,a,o,r);
+                cout << " a="<<a<<"->next="<<nextS->toString()<<",o="<<o<<",r="<<r<<"; ";
+                delete nextS;
+            }
+            cout << endl;
+
+
+            cout << " -- isFinal --"<<endl;
+            cout << hsstate.toString()<<": "<< isFinal(&hsstate)<<endl;
+
+            cout << "-- immediateReward --"<<endl;
+            cout << hsstate.toString()<<": "<< getImmediateReward(&hsstate)<<endl;
+
+        } // if sim!=NULL
+
+    //} //while
+
+                            }
+                        }
+
+                        c++;
+                        long runT = t.stopTimer(tid);
+                        cout << "time field: "<<runT<<endl;
+                        long iLeft = _map->numFreeCells()-c;
+                        cout << "Itts left: "<<iLeft<<"; time: "<<(iLeft*runT)<<" s = "<<(iLeft*runT/3600.0)<<" h"<<endl;
+                    }
+                }
+            }
+
+        }
+
+
+        cout << "TOTAL TIME: "<<t.getTime(sTime)<<" s"<<endl<<endl;
+
+
+}

@@ -1,0 +1,1 @@
+fme_place/map3_12x14.txt

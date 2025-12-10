@@ -1,0 +1,26 @@
+<Settings name="hsserver">
+
+<ip>localhost</ip>
+<port>1121</port>
+
+<path>
+	<maps>/home/agoldhoorn/MyProjects/Experiments/maps/</maps>
+	<logs>/home/agoldhoorn/MyProjects/Experiments/test-logs/</logs> <!-- log dir used when chosen -->
+	<actions>/mnt/ramdisk/run2/</actions> <!-- /home/agoldhoorn/MyProjects/Experiments/actions-recorded/ -->
+</path>
+<progs>
+	<server>/mnt/ramdisk/server2/hsserver</server>
+	<autohider>/mnt/ramdisk/hsautohider</autohider>
+	<!-- <autohider>/home/agoldhoorn/MyProjects/HideSeekGame/hsautohider/build/release/hsautohider</autohider> -->
+	<!-- <autohider>/home/agoldhoorn/MyProjects/HideSeekGame/Marzo/Clientcopy1/HideSeekGame</autohider> -->
+</progs>
+
+<logdb>
+	<server>localhost</server>
+	<database>hsgamelog</database>
+	<user>hsserver</user>
+	<pass>hsserver_us3r_p@ss</pass>
+</logdb>
+<log-method>db</log-method> <!-- db|file -->
+
+</Settings>

@@ -1,0 +1,8 @@
+Simulator.o: ../../src/Simulator.cc ../../src/Simulator.h \
+ ../../src/State.h ../../src/PolicyGraph.h ../../src/Obs.h \
+ ../../src/Action.h ../../src/Model.h ../../src/Utils.h \
+ ../../src/RandSource.h
+../../src/Simulator.cc ../../src/Simulator.h :
+ ../../src/State.h ../../src/PolicyGraph.h ../../src/Obs.h :
+ ../../src/Action.h ../../src/Model.h ../../src/Utils.h :
+ ../../src/RandSource.h :

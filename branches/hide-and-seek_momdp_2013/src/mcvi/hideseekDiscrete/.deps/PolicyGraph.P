@@ -1,0 +1,6 @@
+PolicyGraph.o: ../../src/PolicyGraph.cc ../../src/PolicyGraph.h \
+ ../../src/Obs.h ../../src/Action.h ../../src/Model.h ../../src/State.h \
+ ../../src/Utils.h
+../../src/PolicyGraph.cc ../../src/PolicyGraph.h :
+ ../../src/Obs.h ../../src/Action.h ../../src/Model.h ../../src/State.h :
+ ../../src/Utils.h :

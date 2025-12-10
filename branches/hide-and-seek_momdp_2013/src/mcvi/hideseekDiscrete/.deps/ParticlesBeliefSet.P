@@ -1,0 +1,8 @@
+ParticlesBeliefSet.o: ../../src/ParticlesBeliefSet.cc \
+ ../../src/ParticlesBeliefSet.h ../../src/BeliefSet.h ../../src/Belief.h \
+ ../../src/State.h ../../src/Particle.h ../../src/Utils.h \
+ ../../src/ParticlesBelief.h
+../../src/ParticlesBeliefSet.cc :
+ ../../src/ParticlesBeliefSet.h ../../src/BeliefSet.h ../../src/Belief.h :
+ ../../src/State.h ../../src/Particle.h ../../src/Utils.h :
+ ../../src/ParticlesBelief.h :

@@ -1,0 +1,15 @@
+[Desktop Entry]
+# How to make a link of the H&S client to Unity bar
+# Put this file in ~/.local/share/applications (a copy or a link: ln -s )
+# Then open the directory with the explorer and drag the icon to Unity
+Name=Hide-and-Seek Client
+GenericName=Hide-and-Seek Client
+Comment=Client for Hide-and-Seek Game
+Exec=/home/agoldhoorn/MyProjects/HideSeekGame/hscomplete3/build/build/release/gui/hsclient
+Icon=/home/agoldhoorn/MyProjects/HideSeekGame/hscomplete3/cfg/hide-and-seek-icon.png
+Terminal=true
+Type=Application
+#Categories=Education;Literature;Qt;
+#X-SuSE-translate=false;
+#MimeType=x-scheme-handler/mendeley;application/pdf;text/x-bibtex;
+#X-Mendeley-Version=1

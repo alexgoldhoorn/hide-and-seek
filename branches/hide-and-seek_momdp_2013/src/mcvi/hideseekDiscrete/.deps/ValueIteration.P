@@ -1,0 +1,4 @@
+ValueIteration.o: ../../src/ValueIteration.cc ../../src/ValueIteration.h \
+ ../../src/Utils.h
+../../src/ValueIteration.cc ../../src/ValueIteration.h :
+ ../../src/Utils.h :

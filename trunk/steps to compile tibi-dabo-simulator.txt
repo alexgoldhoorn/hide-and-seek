@@ -1,0 +1,138 @@
+* add to .bashrc:
+
+source /usr/share/gazebo/setup.sh
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:~/iri-lab/iri_ws/src/iri_navigation/iri_gazebo_worlds/models
+export GAZEBO_RESOURCE_PATH=$GAZEBO_RESOURCE_PATH:~/iri-lab/iri_ws/src/iri_navigation/iri_gazebo_worlds/models
+export ROBOT=tibi
+export OTHER_ROBOT=dabo
+export ROS_MODE=sim
+
+* libftd2xx
+link in usr/lib:
+> cd /usr/lib
+> sudo ln -s /usr/local/lib/libftd2xx.so 
+
+* xsd
+Install xsd compiler:
+> sudo apt-get install xsdcxx libxerces-c-dev 
+
+* ros controllers
+> sudo apt-get install ros-indigo-effort-controllers
+
+* libcomm
+> cd ~/iri-lab/labrobotica/drivers/comm/trunk/build
+> cmake .. && sudo make install
+
+* trajectory
+> cd  ~/iri-lab/labrobotica/algorithms/trajectory/trunk/build
+> cmake .. && sudo make install
+
+* dynamixel
+> cd ~/iri-lab/labrobotica/drivers/dynamixel/trunk/build
+> cmake .. && sudo make install
+
+* dynamixel motor
+> cd ~/iri-lab/labrobotica/drivers/dynamixel_motor_cont/trunk/build
+> cmake .. && sudo make install
+
+* motor_control
+> cd /iri-lab/labrobotica/drivers/motor_control/trunk/build
+> cmake .. && sudo make install
+
+But gave error:
+    /home/agoldhoorn/iri-lab/labrobotica/drivers/motor_control/trunk/src/motor_feedback.cpp: In static member function ‘static void* CMotorFeedback::polling_feedback_thread(void*)’:
+    /home/agoldhoorn/iri-lab/labrobotica/drivers/motor_control/trunk/src/motor_feedback.cpp:37:18: error: ‘usleep’ was not declared in this scope
+       usleep(1000);// sleep for 1ms
+
+I had to add to src/motor_feedback.cpp:
+#include <unistd.h>
+
+Cause:
+"It works on other platforms because they are compiling with an old version of gcc (<4.7) which accidentally included unistd.h in some system headers."
+from: http://stackoverflow.com/a/17837158/1771479
+
+(I use gcc 4.9.3)
+
+
+* segway_head
+> cd ~/iri-lab/labrobotica/drivers/segway_head/trunk/build
+> cmake .. && sudo make install
+
+* tibi_dabo_msgs
+> catkin_make --only-pkg-with-deps tibi_dabo_msgs
+
+* other ros packages:
+> sudo apt-get install ros-indigo-yocs-velocity-smoother 
+> sudo apt-get install ros-indigo-yocs-cmd-vel-mux 
+
+
+* TibiDaboController
+> catkin_make --only-pkg-with-deps tibi_dabo_controller
+
+
+
+* other ros packages 
+> cd ~/iri-lab/labrobotica/drivers/asterx1_gps/trunk/build && cmake .. && make && sudo make install
+
+> catkin_make --only-pkg-with-deps iri_gazebo_worlds
+
+> cd ~/iri-lab/labrobotica/algorithms/people_tracking/trunk/build
+> cmake .. && sudo make install
+> cd ~/iri-lab/labrobotica/algorithms/laser_people_detection/trunk/build
+> cmake .. && sudo make install
+> cd ~/iri-lab/labrobotica/restricted/algorithms/people_prediction/trunk/build 
+> cmake .. && sudo make install
+> cd ~/iri-lab/labrobotica/restricted/algorithms/people_tracking_mht/trunk/build 
+> cmake .. && sudo make install
+
+
+> catkin_make --only-pkg-with-deps iri_laser_people_detection
+> catkin_make --only-pkg-with-deps iri_laser_people_map_filter
+> catkin_make --only-pkg-with-deps iri_people_tracking_mht
+
+added:
+> cd ~/iri-lab/labrobotica/drivers/segway_battery/trunk/build 
+> cmake .. && sudo make install
+
+> cd ~/iri-lab/labrobotica/drivers/dynamixel_gripper/trunk/build 
+> cmake .. && sudo make install
+
+> cd  ~/iri-lab/labrobotica/drivers/firewire_camera/trunk/build
+> cmake .. && sudo make install
+
+* issue Eigen cmake and iri_common_drivers (iri_perception/iri_depth_image_proc/)
+in ~/iri-lab/iri_ws/src/iri_perception/iri_depth_image_proc:
+- add to package.xml:
+<build_depend>cmake_modules</build_depend>
+<run_depend>cmake_modules</run_depend>
+- and do CMakeLists.txt:
+find_package(cmake_modules REQUIRED)
+
+see: http://answers.ros.org/question/188628/catkin_make-eigen-indigo/?answer=188629#post-id-188629
+
+REST: steps of Ely's document
+
+
+---- other notes -----
+-
+* debug ros node:
+> catkin_make --only-pkg-with-deps tibi_dabo_faf -DCMAKE_BUILD_TYPE=Debug
+in launch:
+ <node pkg="tibi_dabo_faf"
+        launch-prefix="gdb -ex run --args"
+    ...
+    >
+
+see: http://answers.ros.org/question/200155/how-to-debug-executable-built-with-catkin_make-without-roslaunch/
+
+
+hs:
+> cmake -DCMAKE_BUILD_TYPE=Debug ..
+> sudo make install
+
+
+* solve OpenCV 2.0 & 3.0:
+do a `sudo make install` in the dir of OpenCV 2.0 to make 2.0 the global version
+
+
+

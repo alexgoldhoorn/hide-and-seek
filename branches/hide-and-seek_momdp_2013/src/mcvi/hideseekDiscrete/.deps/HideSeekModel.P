@@ -1,0 +1,10 @@
+HideSeekModel.o: HideSeekModel.cc HideSeekModel.h ../../src/Model.h \
+ ../../src/State.h ../../src/Utils.h ../../src/Include.h \
+ ../../src/Action.h ../../src/Model.h ../../src/Obs.h ../../src/Belief.h \
+ ../../src/Particle.h ../../src/BeliefNode.h ../../src/PolicyGraph.h \
+ ../../src/RandSource.h ../../src/ParticlesBelief.h
+HideSeekModel.cc HideSeekModel.h ../../src/Model.h :
+ ../../src/State.h ../../src/Utils.h ../../src/Include.h :
+ ../../src/Action.h ../../src/Model.h ../../src/Obs.h ../../src/Belief.h :
+ ../../src/Particle.h ../../src/BeliefNode.h ../../src/PolicyGraph.h :
+ ../../src/RandSource.h ../../src/ParticlesBelief.h :
