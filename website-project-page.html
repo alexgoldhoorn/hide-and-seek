@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hide-and-Seek Robot Search Simulator - C++ implementation of POMCP, MOMDP, Particle Filters, Kalman Filters and heuristic algorithms for robot search and tracking developed during PhD research (Goldhoorn 2017)">
+    <title>Hide-and-Seek Robot Search Simulator - Alex Goldhoorn</title>
+    <link rel="stylesheet" href="../../style/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/" style="color: white; text-decoration: none;">Alex Goldhoorn</a></h1>
+            <p class="subtitle">Research Code</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <!-- Navigation injected by navigation.js -->
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="card">
+            <p><a href="/projects/">&larr; Back to Projects</a></p>
+
+            <h2>Hide-and-Seek Robot Search Simulator</h2>
+
+            <p>
+                C++ simulation framework for probabilistic robot search and tracking with multiple solver implementations.
+                Includes POMCP, MOMDP, Particle Filters, Kalman Filters, and heuristic methods. This is the complete
+                research code from my PhD thesis on searching and tracking humans in urban environments.
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="https://github.com/alexgoldhoorn/hide-and-seek" class="btn-primary" target="_blank" rel="noopener">
+                    <svg style="display: inline; width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    View on GitHub
+                </a>
+                <a href="/projects/hide-and-seek-belief/" class="btn-secondary" style="margin-left: 1rem;">Try Interactive Demo</a>
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>What's Included</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div>
+                    <h3 style="color: var(--primary-blue); font-size: 1.1rem; margin-bottom: 0.5rem;">🤖 Solver Implementations</h3>
+                    <ul style="margin-left: 1.5rem; color: #555;">
+                        <li>POMCP (online Monte-Carlo planning)</li>
+                        <li>MOMDP (mixed-observability planning)</li>
+                        <li>Particle Filter tracking</li>
+                        <li>Kalman Filter tracking</li>
+                        <li>Multi-robot cooperative search</li>
+                        <li>Heuristic baselines</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 style="color: var(--primary-blue); font-size: 1.1rem; margin-bottom: 0.5rem;">🎮 Game Infrastructure</h3>
+                    <ul style="margin-left: 1.5rem; color: #555;">
+                        <li>Client-server multiplayer architecture</li>
+                        <li>Graphical Qt client for human players</li>
+                        <li>Automated hider and seeker agents</li>
+                        <li>MySQL logging for experiment analysis</li>
+                        <li>Map editor and scenario tools</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 style="color: var(--primary-blue); font-size: 1.1rem; margin-bottom: 0.5rem;">🔬 Research Data</h3>
+                    <ul style="margin-left: 1.5rem; color: #555;">
+                        <li>Maps from published experiments</li>
+                        <li>Pre-computed MOMDP policies</li>
+                        <li>Test scenarios and benchmarks</li>
+                        <li>ROS integration for real robots</li>
+                        <li>APPL 0.95 POMDP solver library</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Quick Start</h2>
+
+            <p>The simulator can be built as a library or with Qt for the graphical interface:</p>
+
+            <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 4px solid var(--primary-blue); margin: 1rem 0;">
+                <pre style="margin: 0; font-family: monospace; font-size: 0.9rem; overflow-x: auto;">
+# Build library version
+cd trunk/build
+cmake ..
+make
+
+# Or build Qt version for GUI/multiplayer
+cd trunk
+qmake hsmomdp.pro && make    # Automated seeker
+qmake hsserver.pro && make   # Game server
+qmake hsclient.pro && make   # GUI client
+                </pre>
+            </div>
+
+            <p style="color: #666; font-size: 0.95rem; margin-top: 1rem;">
+                <strong>Note:</strong> This code is from 2011-2016 research and uses historical dependencies
+                (g++ 4.8, OpenCV 2.3, Qt 5, MySQL 5.6). See the
+                <a href="https://github.com/alexgoldhoorn/hide-and-seek#dependencies" target="_blank">README</a>
+                for modern build guidance.
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Example Usage</h2>
+
+            <p>Run a POMCP-based seeker in hide-and-seek mode:</p>
+
+            <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin: 1rem 0;">
+                <pre style="margin: 0; font-family: monospace; font-size: 0.9rem;">
+# Start game server
+./bin/hsserver
+
+# In another terminal, run POMCP seeker on map 1
+./bin/hsmomdp -Gh -scd -A 1 -u TestUser
+
+# Flags:
+#   -Gh   : Hide-and-seek game mode
+#   -scd  : POMCP solver with discrete states
+#   -A 1  : Use map ID 1
+#   -u    : Username for logging
+                </pre>
+            </div>
+
+            <p>
+                The simulator supports many solvers and configurations. See <code>trunk/README.txt</code> for the
+                complete command-line reference (17KB documentation).
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Related Resources</h2>
+
+            <div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1.5rem; margin: 1.5rem 0; border-radius: 4px;">
+                <h3 style="margin-top: 0; color: #1976d2;">PhD Thesis (2017)</h3>
+                <p style="margin-bottom: 0.5rem;">
+                    <em>"Searching and Tracking of Humans in Urban Environments by Humanoid Robots"</em><br>
+                    Alex Goldhoorn, Institut de Robòtica i Informàtica Industrial, CSIC-UPC, Barcelona
+                </p>
+                <p style="margin-bottom: 0;">
+                    <a href="/thesis/Goldhoorn2017_PhD_thesis.pdf">Download PDF</a> |
+                    <a href="/thesis/">Thesis Website</a>
+                </p>
+            </div>
+
+            <h3 style="margin-top: 2rem; color: var(--primary-blue);">Selected Publications</h3>
+            <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                <li>
+                    <a href="/publications/ar2016/">Searching and Tracking People with Cooperative Mobile Robots</a><br>
+                    <span style="color: #666; font-size: 0.9rem;">Autonomous Robots, vol. 42, pp. 1-25, 2017</span>
+                </li>
+                <li>
+                    <a href="/publications/ras2016/">Searching and Tracking in Urban Environments with Dynamic Obstacles</a><br>
+                    <span style="color: #666; font-size: 0.9rem;">Robotics and Autonomous Systems, 2017</span>
+                </li>
+                <li>
+                    <a href="/publications/find-and-follow/">Continuous Real Time POMCP to Find-and-Follow People</a><br>
+                    <span style="color: #666; font-size: 0.9rem;">IEEE-RAS Humanoids Conference, 2014</span>
+                </li>
+                <li>
+                    <a href="/publications/robot2013/">Analysis of Methods for Playing Human Robot Hide-and-Seek</a><br>
+                    <span style="color: #666; font-size: 0.9rem;">ROBOT 2013: First Iberian Robotics Conference</span>
+                </li>
+            </ul>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="/publications/">View all publications &rarr;</a>
+            </p>
+        </section>
+
+        <section class="card">
+            <h2>Try it Online</h2>
+
+            <p>
+                Want to see the algorithms in action without installing anything? Try the
+                <strong>web-based interactive demo</strong> that visualizes the belief tracking and planning algorithms:
+            </p>
+
+            <div style="text-align: center; margin: 2rem 0;">
+                <a href="/projects/hide-and-seek-belief/" class="btn-primary" style="font-size: 1.1rem; padding: 12px 24px;">
+                    Launch Interactive Simulation
+                </a>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+                    <strong>Compare Algorithms</strong>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">POMCP, Particle Filters, Frontier Exploration</p>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+                    <strong>Custom Maps</strong>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">Design scenarios and test strategies</p>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">👁️</div>
+                    <strong>Visualize Beliefs</strong>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">See probability distributions in real-time</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Citation</h2>
+
+            <p>If you use this code in your research, please cite:</p>
+
+            <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 4px solid #6c757d; margin: 1rem 0;">
+                <pre style="margin: 0; font-family: monospace; font-size: 0.85rem; overflow-x: auto;">
+@phdthesis{Goldhoorn2017,
+    author = "Alex Goldhoorn",
+    title = "Searching and Tracking of Humans in Urban Environments by Humanoid Robots",
+    school = "Institut de Robòtica i Informàtica Industrial, CSIC-UPC",
+    year = "2017",
+    month = "June",
+    address = "Barcelona, Spain"
+}
+                </pre>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>License & Contact</h2>
+
+            <p>
+                This software is released under the <strong>GNU Lesser General Public License v3.0</strong> (LGPL v3).
+                You are free to use, modify, and redistribute it under the terms of the license.
+            </p>
+
+            <p style="margin-top: 1.5rem;">
+                <strong>Contact:</strong><br>
+                Alex Goldhoorn<br>
+                Website: <a href="https://alex.goldhoorn.net">alex.goldhoorn.net</a><br>
+                Email: <a href="mailto:alex@goldhoorn.net">alex@goldhoorn.net</a>
+            </p>
+
+            <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                <em>Note: The institutional email (agoldhoorn@iri.upc.edu) from the original research is no longer active.</em>
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Alex Goldhoorn. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../../navigation.js"></script>
+</body>
+</html>

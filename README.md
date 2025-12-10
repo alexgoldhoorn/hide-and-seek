@@ -1,6 +1,6 @@
-# Hide-and-Seek POMCP Simulator
+# Hide-and-Seek Robot Search Simulator
 
-Simulation framework for robot search and tracking using POMCP (Partially Observable Monte-Carlo Planning) and particle filters. Developed for PhD research on probabilistic human tracking in urban environments.
+Simulation framework for probabilistic robot search and tracking with multiple solver implementations (POMCP, MOMDP, Particle Filters, Kalman Filters, and heuristics). Developed for PhD research on human tracking in urban environments.
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Language: C++11](https://img.shields.io/badge/C++-11-00599C.svg)](https://isocpp.org/)
